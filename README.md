@@ -1,2 +1,2 @@
-# lepo
-Lepo - Your codebase expert
+# Lepo
+Your codebase expert
