@@ -9,6 +9,9 @@ import type { WebviewApi } from "vscode-webview";
  * dev server by using native web browser features that mock the functionality
  * enabled by acquireVsCodeApi.
  */
+
+export type Message = { command: string; text: string };
+
 class VSCodeAPIWrapper {
   private readonly vsCodeApi: WebviewApi<unknown> | undefined;
 
@@ -28,7 +31,7 @@ class VSCodeAPIWrapper {
    *
    * @param message Abitrary data (must be JSON serializable) to send to the extension context.
    */
-  public postMessage(message: unknown) {
+  public postMessage(message: Message) {
     if (this.vsCodeApi) {
       this.vsCodeApi.postMessage(message);
     } else {
@@ -44,7 +47,7 @@ class VSCodeAPIWrapper {
    *
    * @return The current state or `undefined` if no state has been set.
    */
-  public getState(): unknown | undefined {
+  public getState(): any {
     if (this.vsCodeApi) {
       return this.vsCodeApi.getState();
     } else {
@@ -64,7 +67,7 @@ class VSCodeAPIWrapper {
    *
    * @return The new state.
    */
-  public setState<T extends unknown | undefined>(newState: T): T {
+  public setState<T extends any>(newState: T): T {
     if (this.vsCodeApi) {
       return this.vsCodeApi.setState(newState);
     } else {
