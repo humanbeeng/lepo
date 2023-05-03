@@ -1,10 +1,10 @@
 {
-  "name": "hello-world-svelte",
-  "displayName": "hello-world-svelte",
-  "description": "A hello world sample extension to demonstrate using Svelte with the Webview UI Toolkit for VS Code.",
+  "name": "lepo-vsc-extension",
+  "displayName": "Lepo AI",
+  "description": "Lepo AI - Your codebase expert",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.46.0"
+    "vscode": "^1.70.0"
   },
   "categories": [
     "Other"
@@ -14,10 +14,31 @@
   "contributes": {
     "commands": [
       {
-        "command": "hello-world.showHelloWorld",
-        "title": "Hello World (Svelte): Show"
+        "command": "lepo.auth",
+        "title": "Authenticate"
       }
-    ]
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "lepo-sidepanel",
+          "title": "Lepo",
+          "icon": "media/chat.svg",
+          "contentSecurityPolicy": "default-src 'none'; img-src https: data: filesystem:;"
+        }
+      ]
+    },
+    "views": {
+      "lepo-sidepanel": [
+        {
+          "id": "lepo.main",
+          "type": "webview",
+          "name": "Lepo",
+          "icon": "media/chat.svg",
+          "contextualTitle": "Lepo"
+        }
+      ]
+    }
   },
   "scripts": {
     "install:all": "npm install && cd webview-ui && npm install",
