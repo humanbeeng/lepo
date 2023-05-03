@@ -1,37 +1,38 @@
 <script lang="ts">
-  import { provideVSCodeDesignSystem, vsCodeButton } from "@vscode/webview-ui-toolkit";
+  import {
+    provideVSCodeDesignSystem,
+    vsCodeButton,
+    vsCodeTextArea,
+    vsCodeTextField,
+  } from "@vscode/webview-ui-toolkit";
+  import LepoSidePanel from "./panels/LepoSidePanel.svelte";
+  import WelcomeSidePanel from "./panels/WelcomeSidePanel.svelte";
   import { vscode } from "./utilities/vscode";
 
-  // In order to use the Webview UI Toolkit web components they
-  // must be registered with the browser (i.e. webview) using the
-  // syntax below.
-  provideVSCodeDesignSystem().register(vsCodeButton());
+  provideVSCodeDesignSystem().register(vsCodeButton(), vsCodeTextField(), vsCodeTextArea());
 
-  // To register more toolkit components, simply import the component
-  // registration function and call it from within the register
-  // function, like so:
-  //
-  // provideVSCodeDesignSystem().register(
-  //   vsCodeButton(),
-  //   vsCodeCheckbox()
-  // );
-  //
-  // Finally, if you would like to register all of the toolkit
-  // components at once, there's a handy convenience function:
-  //
-  // provideVSCodeDesignSystem().register(allComponents);
+  let page: "welcome" | "chat" = vscode.getState()?.page || "welcome";
 
-  function handleHowdyClick() {
-    vscode.postMessage({
-      command: "hello",
-      text: "Hey there partner! 🤠",
-    });
+  $: {
+    vscode.setState({ page });
   }
+
+  export const handleHello = () => {
+    console.log("Handling hello");
+    page = "chat";
+  };
 </script>
 
 <main>
-  <h1 class="bg-blue-500">Hello world!</h1>
-  <vscode-button>Click me</vscode-button>
+  {#if page === "chat"}
+    <LepoSidePanel
+      onclick={() => {
+        page = "welcome";
+      }}
+    />
+  {:else if page === "welcome"}
+    <WelcomeSidePanel />
+  {/if}
 </main>
 
 <style lang="postcss" global>
