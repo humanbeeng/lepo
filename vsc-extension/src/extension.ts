@@ -1,12 +1,8 @@
-import { commands, ExtensionContext } from "vscode";
-import { HelloWorldPanel } from "./panels/HelloWorldPanel";
+import * as vscode from "vscode";
+import { ExtensionContext } from "vscode";
+import LepoSidePanelProvider from "./provider/sidepanel/LepoSidePanelProvider";
 
-export function activate(context: ExtensionContext) {
-  // Create the show hello world command
-  const showHelloWorldCommand = commands.registerCommand("hello-world.showHelloWorld", () => {
-    HelloWorldPanel.render(context.extensionUri);
-  });
-
-  // Add command to the extension context
-  context.subscriptions.push(showHelloWorldCommand);
+export async function activate(context: ExtensionContext) {
+  const lepoSidePanelProvider = new LepoSidePanelProvider(context, context.extensionUri);
+  vscode.window.registerWebviewViewProvider("lepo.main", lepoSidePanelProvider, {});
 }
