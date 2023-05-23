@@ -1,5 +1,10 @@
 <script lang="ts">
   let name: string = " @humanbeeng";
+  let text: string = "";
+
+  const handleSubmit = () => {
+    console.log(text);
+  };
 </script>
 
 <main class="flex h-screen">
@@ -22,11 +27,18 @@
         Please note that since I'm an AI assistant, I may not have all knowledge about your project. Make sure
         to verify my answers and iterate upon that.
       </p>
+      <p>{text}</p>
     </div>
-    <div class="justify-end align-bottom py-3">
-      <div class="flex w-full justify-between gap-2 flex-row">
-        <vscode-text-area />
-        <vscode-button>Send</vscode-button>
+    <div class="py-3 bg-green-500">
+      <div class="flex w-full justify-between gap-2">
+        <vscode-text-area
+          value={text}
+          on:input={(event) => {
+            text = event.target.value;
+          }}
+          class="w-full h-full"
+        />
+        <vscode-button on:keypress={handleSubmit} on:click={handleSubmit}>Send</vscode-button>
       </div>
     </div>
   </div>

@@ -5,8 +5,8 @@
     vsCodeTextArea,
     vsCodeTextField,
   } from "@vscode/webview-ui-toolkit";
+  import ChatSidePanel from "./panels/ChatSidePanel.svelte";
   import LepoSidePanel from "./panels/LepoSidePanel.svelte";
-  import WelcomeSidePanel from "./panels/WelcomeSidePanel.svelte";
   import { vscode } from "./utilities/vscode";
 
   provideVSCodeDesignSystem().register(vsCodeButton(), vsCodeTextField(), vsCodeTextArea());
@@ -31,7 +31,7 @@
       }}
     />
   {:else if page === "welcome"}
-    <WelcomeSidePanel />
+    <ChatSidePanel />
   {/if}
 </main>
 
