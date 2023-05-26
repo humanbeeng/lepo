@@ -1,0 +1,10 @@
+[database]
+server = "aws.connect.psdb.cloud"
+protocol = "tcp"
+username = "ENTER YOUR USERNAME HERE"
+password = "ENTER YOUR BRANCH PASSWORD"
+db = "test"
+
+
+[server]
+port = 3000
