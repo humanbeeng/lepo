@@ -13,7 +13,6 @@ export default function Home() {
       <MainNavigation />
 
       <section className="grid grid-cols-1 py-28  lg:py-60  items-center">
-        {/* <div className=" col-start-2 col-span-3 flex px-7 lg:py-0 mx-6 bg-green-100"> */}
         <h1 className="font-heading px-2 justify-center  text-xl lg:text-5xl text-center lg:px-32">
           Lepo is an AI assistant who can help you
           <span className="underline">
@@ -22,7 +21,6 @@ export default function Home() {
           </span>{' '}
           code right inside your editor.
         </h1>
-        {/* </div> */}
       </section>
 
       <section className="bg-black ">

@@ -1,0 +1,10 @@
+name: vsc-extension
+id: 40f305c5-99a8-4ed8-abc8-19f0a19b2f05
+languages:
+  - TypeScript
+  - TSX
+extensions:
+  - .ts
+  - .cts
+  - .mts
+  - .tsx
