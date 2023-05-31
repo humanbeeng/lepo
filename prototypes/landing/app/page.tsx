@@ -13,14 +13,16 @@ export default function Home() {
       <MainNavigation />
 
       <section className="grid grid-cols-1 py-28  lg:py-60  items-center">
-        <h1 className="font-heading px-2 justify-center  text-xl lg:text-5xl text-center lg:px-32">
-          Lepo is an AI assistant who can help you
-          <span className="underline">
-            {' '}
-            write, understand and navigate
-          </span>{' '}
-          code right inside your editor.
-        </h1>
+        <div className="grid grid-cols-5 justify-center justify-items-center">
+          <h1 className="col-span-3 col-start-2 font-heading px-2 justify-center text-xl lg:text-6xl text-center lg:px-32">
+            Lepo is an AI assistant who can help you
+            <span className="underline">
+              {' '}
+              write, understand and navigate
+            </span>{' '}
+            code.
+          </h1>
+        </div>
       </section>
 
       <section className="bg-black ">
