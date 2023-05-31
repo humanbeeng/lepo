@@ -22,8 +22,9 @@ const fontHeading = localFont({
 });
 
 export const metadata = {
-  title: 'Landing page',
-  description: 'Landing page prototype',
+  title: 'Lepo',
+  description:
+    'Lepo AI, an AI assistant that can help you write, explain and navigate code.',
 };
 
 export default function RootLayout({
