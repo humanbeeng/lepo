@@ -1,0 +1,7 @@
+id: "java-method"
+message: "Java methods extraction"
+severity: "info"
+language: "Java"
+rule:
+  all:
+    - kind: method_declaration

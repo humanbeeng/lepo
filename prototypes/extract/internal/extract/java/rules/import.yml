@@ -1,0 +1,7 @@
+id: "java-imports"
+message: "Java imports extraction"
+severity: "info"
+language: "Java"
+rule:
+  all:
+    - kind: import_declaration

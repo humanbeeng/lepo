@@ -1,0 +1,7 @@
+id: "java-package"
+message: "Java package extraction"
+severity: "info"
+language: "Java"
+rule:
+  all:
+    - kind: package_declaration

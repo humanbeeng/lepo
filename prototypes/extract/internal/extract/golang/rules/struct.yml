@@ -1,0 +1,7 @@
+id: "go-struct"
+language: "Go"
+severity: "info"
+message: "Go struct extraction"
+rule:
+  all:
+    - pattern: 'type $STRUCT_NAME struct {$$$}'
