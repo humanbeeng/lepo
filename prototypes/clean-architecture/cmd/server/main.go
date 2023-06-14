@@ -9,6 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/humanbeeng/lepo/prototypes/clean-architecture/internal/app"
 	"github.com/humanbeeng/lepo/prototypes/clean-architecture/internal/config"
+	"github.com/humanbeeng/lepo/prototypes/clean-architecture/internal/database"
 	storage "github.com/humanbeeng/lepo/prototypes/clean-architecture/internal/database"
 )
 
@@ -35,18 +36,16 @@ func main() {
 	}
 
 	app.Gracefully()
-
 }
 
 func run(appConfig config.AppConfig) (func(), error) {
-
 	app, cleanup, err := buildServer(appConfig)
 	if err != nil {
 		return nil, err
 	}
 
 	go func() {
-		app.Listen("0.0.0.0:" + fmt.Sprintf("%d", appConfig.ServerConfig.Port))
+		app.Listen(":" + fmt.Sprintf("%d", appConfig.ServerConfig.Port))
 	}()
 
 	return func() {
@@ -68,7 +67,6 @@ func buildServer(appConfig config.AppConfig) (*fiber.App, func(), error) {
 	})
 
 	return app, func() {
-		storage.CloseMySQLConnection(db)
+		database.CloseMySQLConnection(db)
 	}, nil
-
 }
