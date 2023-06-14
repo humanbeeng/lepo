@@ -29,7 +29,7 @@ func GetAppConfig() (*AppConfig, error) {
 	k := koanf.New(".")
 
 	if err := k.Load(file.Provider("app.toml"), toml.Parser()); err != nil {
-		return nil, err
+		log.Println("Info: app.toml not found")
 	}
 
 	if err := k.Load(env.Provider("LEPO_", ".", func(s string) string {
