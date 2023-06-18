@@ -8,9 +8,10 @@ import (
 	"path/filepath"
 
 	"github.com/humanbeeng/lepo/server/internal/database"
-	"github.com/humanbeeng/lepo/server/internal/extract"
-	"github.com/humanbeeng/lepo/server/internal/extract/golang"
-	"github.com/humanbeeng/lepo/server/internal/extract/java"
+	"github.com/humanbeeng/lepo/server/internal/git"
+	"github.com/humanbeeng/lepo/server/internal/sync/extract"
+	"github.com/humanbeeng/lepo/server/internal/sync/extract/golang"
+	"github.com/humanbeeng/lepo/server/internal/sync/extract/java"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/graphql"
 	"github.com/weaviate/weaviate/entities/models"
 )
@@ -19,23 +20,44 @@ type Syncer interface {
 	Sync(path string) error
 }
 
-type DirectorySyncer struct {
+type GitSyncer struct {
 	languageToExtractor    map[string]extract.Extractor
 	ExcludedFolderPatterns []string
+	URL                    string
 }
 
-type DirectorySyncerOpts struct {
-	ExcludedFolderPatterns []string
+type GitSyncerOpts struct {
+	URL string
 }
 
-func NewDirectorySyncer(opts DirectorySyncerOpts) *DirectorySyncer {
-	return &DirectorySyncer{
+func NewGitSyncer(opts GitSyncerOpts) *GitSyncer {
+	return &GitSyncer{
 		languageToExtractor:    buildSupportedLanguagesMap(),
-		ExcludedFolderPatterns: opts.ExcludedFolderPatterns,
+		ExcludedFolderPatterns: make([]string, 0),
+		URL:                    opts.URL,
 	}
 }
 
-func (s *DirectorySyncer) Sync(path string) error {
+func (s *GitSyncer) Sync() error {
+	// TODO: Introduce goroutines and pass chunks as batch through channel to improve performance
+
+	log.Printf("Sync job requested for %v\n", s.URL)
+
+	// Clone repository
+	path := "/home/personal/projects/readonly/cloned"
+	clonerOpts := git.GitClonerOpts{
+		URL:        s.URL,
+		TargetPath: path,
+	}
+
+	cloner := git.NewGitCloner(clonerOpts)
+
+	err := cloner.Clone()
+	if err != nil {
+		log.Println("Clone failed", err)
+		return err
+	}
+
 	info, err := os.Stat(path)
 
 	if os.IsNotExist(err) {
@@ -46,11 +68,12 @@ func (s *DirectorySyncer) Sync(path string) error {
 		return fmt.Errorf("error: %v is not a directory\n", path)
 	}
 
-	log.Printf("Sync requested for %v\n", path)
-
 	var extractFailedFiles []string
 	var dirChunks []extract.Chunk
+
 	err = filepath.Walk(path,
+
+		// TODO: Exclude fileChunks
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				log.Printf("error: %v\n", err)
@@ -104,15 +127,16 @@ func (s *DirectorySyncer) Sync(path string) error {
 			log.Println(res.Result.Errors)
 		}
 	}
-	//
+
 	fields := []graphql.Field{
 		{Name: "code"},
 		{Name: "language"},
-		{Name: "belongsTo"},
+		{Name: "module"},
 		{Name: "file"},
 		{Name: "codeType"},
 	}
 
+	// TODO: Remove this query and move this into a test maybe ?
 	nearText := database.WeaviateClient.GraphQL().
 		NearTextArgBuilder().
 		WithConcepts([]string{"health check"})
