@@ -7,11 +7,12 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	chatapi "github.com/humanbeeng/lepo/server/internal/chat/api"
 	"github.com/humanbeeng/lepo/server/internal/command"
 	config "github.com/humanbeeng/lepo/server/internal/config"
 	"github.com/humanbeeng/lepo/server/internal/database"
 	storage "github.com/humanbeeng/lepo/server/internal/database"
-	"github.com/humanbeeng/lepo/server/internal/sync"
+	syncapi "github.com/humanbeeng/lepo/server/internal/sync/api"
 )
 
 func main() {
@@ -40,16 +41,10 @@ func main() {
 }
 
 func run(appConfig config.AppConfig) (func(), error) {
-	app, cleanup, err := buildServer(appConfig)
+	app, cleanup, err := initComponents(appConfig)
 	if err != nil {
 		return nil, err
 	}
-
-	opts := sync.DirectorySyncerOpts{
-		ExcludedFolderPatterns: make([]string, 0),
-	}
-	syncer := sync.NewDirectorySyncer(opts)
-	_ = syncer.Sync("../")
 
 	go func() {
 		err = app.Listen(":" + fmt.Sprintf("%d", appConfig.ServerConfig.Port))
@@ -67,7 +62,7 @@ func run(appConfig config.AppConfig) (func(), error) {
 	}, nil
 }
 
-func buildServer(appConfig config.AppConfig) (*fiber.App, func(), error) {
+func initComponents(appConfig config.AppConfig) (*fiber.App, func(), error) {
 	db, err := storage.BootstrapMySQL()
 	if err != nil {
 		return nil, nil, err
@@ -79,10 +74,7 @@ func buildServer(appConfig config.AppConfig) (*fiber.App, func(), error) {
 	}
 
 	app := fiber.New()
-	app.Use(logger.New())
-	app.Get("/internal/health", func(c *fiber.Ctx) error {
-		return c.SendString("I'm healthy !")
-	})
+	addRoutes(app)
 
 	return app, func() {
 		err = database.CloseMySQLConnection(db)
@@ -90,4 +82,14 @@ func buildServer(appConfig config.AppConfig) (*fiber.App, func(), error) {
 			panic(err)
 		}
 	}, nil
+}
+
+func addRoutes(app *fiber.App) {
+	app.Use(logger.New())
+	app.Get("/internal/health", func(c *fiber.Ctx) error {
+		return c.SendString("I'm healthy !")
+	})
+	v1 := app.Group("/v1")
+	chatapi.NewChatRouter(v1)
+	syncapi.NewSyncRouter(v1)
 }
