@@ -1,0 +1,6 @@
+id: "java-interface"
+message: "Java interface extraction"
+severity: "info"
+language: "Java"
+rule:
+  kind: interface_declaration

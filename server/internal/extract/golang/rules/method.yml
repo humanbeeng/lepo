@@ -1,0 +1,7 @@
+id: "go-method"
+message: "Go methods extraction"
+severity: "info"
+language: "Go"
+rule:
+  all:
+    - kind: method_declaration

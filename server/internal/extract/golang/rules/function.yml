@@ -1,0 +1,7 @@
+id: "go-function"
+message: "Go function extraction"
+severity: "info"
+language: "Go"
+rule:
+  all:
+    - kind: function_declaration

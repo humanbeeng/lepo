@@ -1,0 +1,4 @@
+package embed
+
+func doSomething() {
+}

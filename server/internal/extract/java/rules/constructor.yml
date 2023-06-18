@@ -1,0 +1,7 @@
+id: "java-constructor"
+message: "Java contructor extraction"
+severity: "info"
+language: "Java"
+rule:
+  all:
+    - kind: constructor_declaration

@@ -1,0 +1,7 @@
+id: "java-field"
+message: "Java fields extraction"
+severity: "info"
+language: "Java"
+rule:
+  all:
+    - kind: field_declaration

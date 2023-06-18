@@ -1,0 +1,7 @@
+id: "go-import"
+message: "Go import extraction"
+severity: "info"
+language: "Go"
+rule:
+  all:
+    - kind: import_declaration

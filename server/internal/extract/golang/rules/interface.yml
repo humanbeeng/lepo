@@ -1,0 +1,7 @@
+id: "go-interface"
+language: "Go"
+severity: "info"
+message: "Go interface extraction"
+rule:
+  all:
+    - pattern: 'type $INTERFACE_NAME interface {$$$}'
