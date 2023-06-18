@@ -14,29 +14,20 @@ import (
 )
 
 type JavaExtractor struct {
-	targetTypes           []extract.ChunkType
 	targetTypesToRulesDir map[extract.ChunkType]string
 }
 
 func NewJavaExtractor() *JavaExtractor {
-	var targetTypes []extract.ChunkType
-	targetTypes = append(targetTypes,
-		extract.Method,
-		extract.Class,
-		// TODO: Add interface rule
-		extract.Import,
-	)
 
 	targetTypesToRulesDir := make(map[extract.ChunkType]string)
 	targetTypesToRulesDir[extract.Method] = "internal/extract/java/rules/method.yml"
 	targetTypesToRulesDir[extract.Import] = "internal/extract/java/rules/rules/import.yml"
 	targetTypesToRulesDir[extract.Constructor] = "internal/extract/java/rules/constructor.yml"
-	targetTypesToRulesDir[extract.Import] = "internal/extract/java/rules/import.yml"
+	targetTypesToRulesDir[extract.Interface] = "internal/extract/java/rules/interface.yml"
 	targetTypesToRulesDir[extract.Package] = "internal/extract/java/rules/package.yml"
 	targetTypesToRulesDir[extract.Field] = "internal/extract/java/rules/field.yml"
 
 	return &JavaExtractor{
-		targetTypes:           targetTypes,
 		targetTypesToRulesDir: targetTypesToRulesDir,
 	}
 }
@@ -44,18 +35,18 @@ func NewJavaExtractor() *JavaExtractor {
 func (je *JavaExtractor) Extract(file string) ([]extract.Chunk, error) {
 	fileinfo, err := os.Stat(file)
 	if err != nil {
-		log.Printf("Error: %v\n", err)
+		log.Printf("error: %v\n", err)
 		return nil, err
 	}
 
 	if fileinfo.IsDir() {
-		err := fmt.Errorf("Error: %v is a directory", file)
+		err := fmt.Errorf("error: %v is a directory", file)
 		return nil, err
 	}
 
 	ext := filepath.Ext(file)
 	if ext != ".java" {
-		err := fmt.Errorf("Error: %v is not a java file", file)
+		err := fmt.Errorf("error: %v is not a java file", file)
 		return nil, err
 	}
 
@@ -64,7 +55,7 @@ func (je *JavaExtractor) Extract(file string) ([]extract.Chunk, error) {
 
 	for chunkType, rulepath := range je.targetTypesToRulesDir {
 		if _, err := os.Stat(rulepath); os.IsNotExist(err) {
-			log.Printf("Error: %v rulepath does not exist, hence skipping it", rulepath)
+			log.Printf("error: %v rulepath does not exist, hence skipping it", rulepath)
 			continue
 		}
 
@@ -73,12 +64,12 @@ func (je *JavaExtractor) Extract(file string) ([]extract.Chunk, error) {
 		stdout, stderr, err := execute.CommandExecute(cmd)
 
 		if stderr != "" {
-			log.Printf("Error: %v\n", stderr)
+			log.Printf("error: %v\n", stderr)
 			continue
 		}
 
 		if err != nil {
-			log.Printf("Error: %v\n", err)
+			log.Printf("error: %v\n", err)
 			continue
 		}
 
@@ -86,7 +77,7 @@ func (je *JavaExtractor) Extract(file string) ([]extract.Chunk, error) {
 
 		err = json.Unmarshal([]byte(stdout), &grepResults)
 		if err != nil {
-			log.Printf("Error: Unable to unmarshal stdout %v", err)
+			log.Printf("error: Unable to unmarshal stdout %v", err)
 			continue
 		}
 
@@ -97,7 +88,7 @@ func (je *JavaExtractor) Extract(file string) ([]extract.Chunk, error) {
 		if chunkType == extract.Package {
 			result := grepResults[0]
 			packageStmt = result.Text
-			log.Printf("Info: %v belongs to package %v", file, packageStmt)
+			log.Printf("info: %v belongs to package %v", file, packageStmt)
 		}
 
 		hasher := sha256.New()
