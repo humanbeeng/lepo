@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/humanbeeng/lepo/server/internal/extract/golang"
+	"github.com/humanbeeng/lepo/server/internal/sync/extract/golang"
 	"github.com/stretchr/testify/assert"
 )
+
+// TODO: Create new test resource folder to have dummy go file which contains all constructs
 
 func TestGoExtractWhenFileNotFound(t *testing.T) {
 	ge := golang.NewGoExtractor()

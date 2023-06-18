@@ -6,7 +6,7 @@ type Language string
 
 const (
 	Go   Language = "go"
-	Java          = "java"
+	Java Language = "java"
 )
 
 type Extractor interface {

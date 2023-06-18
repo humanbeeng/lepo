@@ -1,4 +1,4 @@
-package java
+package golang
 
 import (
 	"crypto/sha256"
@@ -9,63 +9,67 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/humanbeeng/lepo/server/internal/execute"
-	"github.com/humanbeeng/lepo/server/internal/extract"
+	"github.com/humanbeeng/lepo/server/internal/sync/execute"
+	"github.com/humanbeeng/lepo/server/internal/sync/extract"
 )
 
-type JavaExtractor struct {
+type GoExtractor struct {
 	targetTypes           []extract.ChunkType
 	targetTypesToRulesDir map[extract.ChunkType]string
 }
 
-func NewJavaExtractor() *JavaExtractor {
+func NewGoExtractor() *GoExtractor {
 	var targetTypes []extract.ChunkType
-	targetTypes = append(targetTypes,
+
+	targetTypes = append(
+		targetTypes,
 		extract.Method,
-		extract.Class,
-		// TODO: Add interface rule
+		extract.Interface,
+		extract.Struct,
 		extract.Import,
+		extract.Function,
 	)
 
 	targetTypesToRulesDir := make(map[extract.ChunkType]string)
-	targetTypesToRulesDir[extract.Method] = "internal/extract/java/rules/method.yml"
-	targetTypesToRulesDir[extract.Import] = "internal/extract/java/rules/rules/import.yml"
-	targetTypesToRulesDir[extract.Constructor] = "internal/extract/java/rules/constructor.yml"
-	targetTypesToRulesDir[extract.Import] = "internal/extract/java/rules/import.yml"
-	targetTypesToRulesDir[extract.Package] = "internal/extract/java/rules/package.yml"
-	targetTypesToRulesDir[extract.Field] = "internal/extract/java/rules/field.yml"
 
-	return &JavaExtractor{
+	targetTypesToRulesDir[extract.Struct] = "/home/personal/projects/lepo/server/internal/sync/extract/golang/rules/struct.yml"
+	targetTypesToRulesDir[extract.Method] = "/home/personal/projects/lepo/server/internal/sync/extract/golang/rules/method.yml"
+	targetTypesToRulesDir[extract.Function] = "/home/personal/projects/lepo/server/internal/sync/extract/golang/rules/function.yml"
+	targetTypesToRulesDir[extract.Import] = "/home/personal/projects/lepo/server/internal/sync/extract/golang/rules/import.yml"
+	targetTypesToRulesDir[extract.Package] = "/home/personal/projects/lepo/server/internal/sync/extract/golang/rules/package.yml"
+
+	return &GoExtractor{
 		targetTypes:           targetTypes,
 		targetTypesToRulesDir: targetTypesToRulesDir,
 	}
 }
 
-func (je *JavaExtractor) Extract(file string) ([]extract.Chunk, error) {
+func (ge *GoExtractor) Extract(file string) ([]extract.Chunk, error) {
+	// TODO: Move this to util package
 	fileinfo, err := os.Stat(file)
 	if err != nil {
-		log.Printf("error: %v\n", err)
+		log.Printf("Error: %v does not exist %v", file, err)
 		return nil, err
 	}
 
 	if fileinfo.IsDir() {
-		err := fmt.Errorf("error: %v is a directory", file)
+		err := fmt.Errorf("Error: %v is a directory", file)
 		return nil, err
 	}
 
 	ext := filepath.Ext(file)
-	if ext != ".java" {
-		err := fmt.Errorf("error: %v is not a java file", file)
+	if ext != ".go" {
+		err := fmt.Errorf("Error: %v is not a Go file", file)
 		return nil, err
 	}
 
 	var packageStmt string
 	var chunks []extract.Chunk
 
-	for chunkType, rulepath := range je.targetTypesToRulesDir {
+	for chunkType, rulepath := range ge.targetTypesToRulesDir {
 		if _, err := os.Stat(rulepath); os.IsNotExist(err) {
-			err = fmt.Errorf("%v rulepath does not exist", rulepath)
-			return nil, err
+			log.Printf("Error: %v rulepath does not exist", rulepath)
+			continue
 		}
 
 		cmd := fmt.Sprintf("ast-grep scan -r %v %v --json", rulepath, file)
@@ -73,12 +77,12 @@ func (je *JavaExtractor) Extract(file string) ([]extract.Chunk, error) {
 		stdout, stderr, err := execute.CommandExecute(cmd)
 
 		if stderr != "" {
-			log.Printf("error: %v\n", stderr)
+			log.Printf("Error: %v\n", stderr)
 			continue
 		}
 
 		if err != nil {
-			log.Printf("error: %v\n", err)
+			log.Printf("Error: %v\n", err)
 			continue
 		}
 
@@ -86,7 +90,7 @@ func (je *JavaExtractor) Extract(file string) ([]extract.Chunk, error) {
 
 		err = json.Unmarshal([]byte(stdout), &grepResults)
 		if err != nil {
-			log.Printf("error: Unable to unmarshal stdout %v", err)
+			log.Printf("error: Unable to unmarshal json %v\n", err)
 			continue
 		}
 
@@ -103,20 +107,23 @@ func (je *JavaExtractor) Extract(file string) ([]extract.Chunk, error) {
 		hasher := sha256.New()
 
 		for _, result := range grepResults {
+
 			hasher.Write([]byte(result.Text))
 			contentHash := hex.EncodeToString(hasher.Sum(nil))
+
 			chunk := extract.Chunk{
-				File:        result.File,
-				Language:    extract.Java,
+				File:        file,
+				Language:    extract.Go,
 				Type:        chunkType,
 				Content:     result.Text,
 				ContentHash: contentHash,
 			}
 			chunks = append(chunks, chunk)
+
 			hasher.Reset()
 		}
-	}
 
+	}
 	// Populate package hash
 	for idx, chunk := range chunks {
 		chunk.Module = packageStmt
