@@ -9,8 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/humanbeeng/lepo/server/internal/sync/execute"
-	"github.com/humanbeeng/lepo/server/internal/sync/extract"
+	"github.com/lepoai/lepo/server/internal/sync/execute"
+	"github.com/lepoai/lepo/server/internal/sync/extract"
 )
 
 type JavaExtractor struct {
@@ -97,7 +97,6 @@ func (je *JavaExtractor) Extract(file string) ([]extract.Chunk, error) {
 		if chunkType == extract.Package {
 			result := grepResults[0]
 			packageStmt = result.Text
-			log.Printf("info: %v belongs to package %v", file, packageStmt)
 		}
 
 		hasher := sha256.New()
@@ -117,7 +116,7 @@ func (je *JavaExtractor) Extract(file string) ([]extract.Chunk, error) {
 		}
 	}
 
-	// Populate package hash
+	// Populate package name to all chunks
 	for idx, chunk := range chunks {
 		chunk.Module = packageStmt
 		chunks[idx] = chunk

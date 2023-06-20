@@ -9,8 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/humanbeeng/lepo/server/internal/sync/execute"
-	"github.com/humanbeeng/lepo/server/internal/sync/extract"
+	"github.com/lepoai/lepo/server/internal/sync/execute"
+	"github.com/lepoai/lepo/server/internal/sync/extract"
 )
 
 type GoExtractor struct {
@@ -48,18 +48,18 @@ func (ge *GoExtractor) Extract(file string) ([]extract.Chunk, error) {
 	// TODO: Move this to util package
 	fileinfo, err := os.Stat(file)
 	if err != nil {
-		log.Printf("Error: %v does not exist %v", file, err)
+		log.Printf("error: %v does not exist %v", file, err)
 		return nil, err
 	}
 
 	if fileinfo.IsDir() {
-		err := fmt.Errorf("Error: %v is a directory", file)
+		err := fmt.Errorf("error: %v is a directory", file)
 		return nil, err
 	}
 
 	ext := filepath.Ext(file)
 	if ext != ".go" {
-		err := fmt.Errorf("Error: %v is not a Go file", file)
+		err := fmt.Errorf("error: %v is not a Go file", file)
 		return nil, err
 	}
 
@@ -68,7 +68,7 @@ func (ge *GoExtractor) Extract(file string) ([]extract.Chunk, error) {
 
 	for chunkType, rulepath := range ge.targetTypesToRulesDir {
 		if _, err := os.Stat(rulepath); os.IsNotExist(err) {
-			log.Printf("Error: %v rulepath does not exist", rulepath)
+			log.Printf("error: %v rulepath does not exist", rulepath)
 			continue
 		}
 
@@ -77,12 +77,12 @@ func (ge *GoExtractor) Extract(file string) ([]extract.Chunk, error) {
 		stdout, stderr, err := execute.CommandExecute(cmd)
 
 		if stderr != "" {
-			log.Printf("Error: %v\n", stderr)
+			log.Printf("error: %v\n", stderr)
 			continue
 		}
 
 		if err != nil {
-			log.Printf("Error: %v\n", err)
+			log.Printf("error: %v\n", err)
 			continue
 		}
 
@@ -101,7 +101,6 @@ func (ge *GoExtractor) Extract(file string) ([]extract.Chunk, error) {
 		if chunkType == extract.Package {
 			result := grepResults[0]
 			packageStmt = result.Text
-			log.Printf("info: %v belongs to package %v", file, packageStmt)
 		}
 
 		hasher := sha256.New()
@@ -124,7 +123,7 @@ func (ge *GoExtractor) Extract(file string) ([]extract.Chunk, error) {
 		}
 
 	}
-	// Populate package hash
+	// Assign package name to all chunks
 	for idx, chunk := range chunks {
 		chunk.Module = packageStmt
 		chunks[idx] = chunk

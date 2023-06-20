@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/humanbeeng/lepo/server/internal/config"
+	"github.com/lepoai/lepo/server/internal/config"
 )
 
 func BootstrapMySQL() (*sql.DB, error) {

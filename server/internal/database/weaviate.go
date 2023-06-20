@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/humanbeeng/lepo/server/internal/config"
+	"github.com/lepoai/lepo/server/internal/config"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/auth"
 	"github.com/weaviate/weaviate/entities/models"
@@ -39,6 +39,7 @@ func BootStrapWeaviate() (*weaviate.Client, error) {
 		return nil, err
 	}
 
+	// Note: Use status code from ClassDeleter 400 to determine if class exists or not
 	exists, err := client.Schema().ClassExistenceChecker().WithClassName(className).Do(context.Background())
 
 	// TODO: Revisit and refactor

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/humanbeeng/lepo/server/internal/sync/extract/golang"
+	"github.com/lepoai/lepo/server/internal/sync/extract/golang"
 	"github.com/stretchr/testify/assert"
 )
 

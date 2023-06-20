@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 
 	"github.com/google/uuid"
-	"github.com/humanbeeng/lepo/server/internal/database"
-	"github.com/humanbeeng/lepo/server/internal/git"
-	"github.com/humanbeeng/lepo/server/internal/sync/extract"
-	"github.com/humanbeeng/lepo/server/internal/sync/extract/golang"
-	"github.com/humanbeeng/lepo/server/internal/sync/extract/java"
+	"github.com/lepoai/lepo/server/internal/database"
+	"github.com/lepoai/lepo/server/internal/git"
+	"github.com/lepoai/lepo/server/internal/sync/extract"
+	"github.com/lepoai/lepo/server/internal/sync/extract/golang"
+	"github.com/lepoai/lepo/server/internal/sync/extract/java"
 	"github.com/weaviate/weaviate/entities/models"
 )
 

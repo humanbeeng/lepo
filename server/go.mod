@@ -1,4 +1,4 @@
-module github.com/humanbeeng/lepo/server
+module github.com/lepoai/lepo/server
 
 go 1.20
 
@@ -6,6 +6,7 @@ require (
 	github.com/go-git/go-git/v5 v5.7.0
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/gofiber/fiber/v2 v2.46.0
+	github.com/google/uuid v1.3.0
 	github.com/knadh/koanf v1.5.0
 	github.com/stretchr/testify v1.8.4
 	github.com/weaviate/weaviate v1.19.0
@@ -37,7 +38,6 @@ require (
 	github.com/go-openapi/validate v0.21.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/imdario/mergo v0.3.15 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/josharian/intern v1.0.0 // indirect

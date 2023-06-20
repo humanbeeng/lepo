@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/humanbeeng/lepo/server/internal/database"
+	"github.com/lepoai/lepo/server/internal/database"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/graphql"
 )
