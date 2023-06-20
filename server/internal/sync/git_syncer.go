@@ -7,18 +7,14 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/google/uuid"
 	"github.com/humanbeeng/lepo/server/internal/database"
 	"github.com/humanbeeng/lepo/server/internal/git"
 	"github.com/humanbeeng/lepo/server/internal/sync/extract"
 	"github.com/humanbeeng/lepo/server/internal/sync/extract/golang"
 	"github.com/humanbeeng/lepo/server/internal/sync/extract/java"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/graphql"
 	"github.com/weaviate/weaviate/entities/models"
 )
-
-type Syncer interface {
-	Sync(path string) error
-}
 
 type GitSyncer struct {
 	languageToExtractor    map[string]extract.Extractor
@@ -41,10 +37,12 @@ func NewGitSyncer(opts GitSyncerOpts) *GitSyncer {
 func (s *GitSyncer) Sync() error {
 	// TODO: Introduce goroutines and pass chunks as batch through channel to improve performance
 
+	syncId := uuid.New()
+
 	log.Printf("Sync job requested for %v\n", s.URL)
 
 	// Clone repository
-	path := "/home/personal/projects/readonly/cloned"
+	path := "/home/personal/projects/readonly/cloned/" + syncId.String()
 	clonerOpts := git.GitClonerOpts{
 		URL:        s.URL,
 		TargetPath: path,
@@ -100,6 +98,12 @@ func (s *GitSyncer) Sync() error {
 	fmt.Println("Number of files chunked", len(dirChunks))
 	fmt.Println("Number of files failed", len(extractFailedFiles))
 
+	if len(dirChunks) == 0 {
+		fmt.Println("No files found to chunk. Exiting")
+		return nil
+	}
+
+	// Move this to embed package
 	objects := make([]*models.Object, 0)
 
 	for _, chunk := range dirChunks {
@@ -127,31 +131,6 @@ func (s *GitSyncer) Sync() error {
 			log.Println(res.Result.Errors)
 		}
 	}
-
-	fields := []graphql.Field{
-		{Name: "code"},
-		{Name: "language"},
-		{Name: "module"},
-		{Name: "file"},
-		{Name: "codeType"},
-	}
-
-	// TODO: Remove this query and move this into a test maybe ?
-	nearText := database.WeaviateClient.GraphQL().
-		NearTextArgBuilder().
-		WithConcepts([]string{"health check"})
-
-	result, err := database.WeaviateClient.GraphQL().Get().
-		WithClassName("CodeSnippets").
-		WithLimit(2).
-		WithNearText(nearText).
-		WithFields(fields...).
-		Do(context.Background())
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(result.Data)
-
 	return nil
 }
 
