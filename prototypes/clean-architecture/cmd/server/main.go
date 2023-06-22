@@ -7,7 +7,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
-	"github.com/humanbeeng/lepo/prototypes/clean-architecture/internal/app"
+	"github.com/humanbeeng/lepo/prototypes/clean-architecture/internal/command"
 	"github.com/humanbeeng/lepo/prototypes/clean-architecture/internal/config"
 	"github.com/humanbeeng/lepo/prototypes/clean-architecture/internal/database"
 	storage "github.com/humanbeeng/lepo/prototypes/clean-architecture/internal/database"
@@ -35,7 +35,7 @@ func main() {
 		return
 	}
 
-	app.Gracefully()
+	command.Gracefully()
 }
 
 func run(appConfig config.AppConfig) (func(), error) {

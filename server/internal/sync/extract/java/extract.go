@@ -28,12 +28,12 @@ func NewJavaExtractor() *JavaExtractor {
 	)
 
 	targetTypesToRulesDir := make(map[extract.ChunkType]string)
-	targetTypesToRulesDir[extract.Method] = "internal/extract/java/rules/method.yml"
-	targetTypesToRulesDir[extract.Import] = "internal/extract/java/rules/rules/import.yml"
-	targetTypesToRulesDir[extract.Constructor] = "internal/extract/java/rules/constructor.yml"
-	targetTypesToRulesDir[extract.Import] = "internal/extract/java/rules/import.yml"
-	targetTypesToRulesDir[extract.Package] = "internal/extract/java/rules/package.yml"
-	targetTypesToRulesDir[extract.Field] = "internal/extract/java/rules/field.yml"
+	targetTypesToRulesDir[extract.Method] = "internal/sync/extract/java/rules/method.yml"
+	targetTypesToRulesDir[extract.Import] = "internal/sync/extract/java/rules/rules/import.yml"
+	targetTypesToRulesDir[extract.Constructor] = "internal/sync/extract/java/rules/constructor.yml"
+	targetTypesToRulesDir[extract.Import] = "internal/sync/extract/java/rules/import.yml"
+	targetTypesToRulesDir[extract.Package] = "internal/sync/extract/java/rules/package.yml"
+	targetTypesToRulesDir[extract.Field] = "internal/sync/extract/java/rules/field.yml"
 
 	return &JavaExtractor{
 		targetTypes:           targetTypes,
@@ -121,6 +121,8 @@ func (je *JavaExtractor) Extract(file string) ([]extract.Chunk, error) {
 		chunk.Module = packageStmt
 		chunks[idx] = chunk
 	}
+
+	fmt.Println(chunks)
 
 	return chunks, nil
 }

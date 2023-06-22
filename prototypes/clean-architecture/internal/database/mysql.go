@@ -28,6 +28,7 @@ func BootstrapMySQL() (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.Println("info: MySQL connection established")
 	return db, nil
 }
 

@@ -1,14 +1,18 @@
 package sync
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 
+	"github.com/humanbeeng/lepo/prototypes/extract/internal/embed"
 	"github.com/humanbeeng/lepo/prototypes/extract/internal/extract"
 	"github.com/humanbeeng/lepo/prototypes/extract/internal/extract/golang"
 	"github.com/humanbeeng/lepo/prototypes/extract/internal/extract/java"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/graphql"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 type Syncer interface {
@@ -68,9 +72,61 @@ func (s *DirectorySyncer) Sync(path string) error {
 			return nil
 		})
 
+	fmt.Println("Number of files chunked ", len(dirChunks))
+
+	objects := make([]*models.Object, 0)
+
 	for _, chunk := range dirChunks {
-		fmt.Printf("-------------\n\n%+v\n---------------\n\n\n\n\n", chunk)
+		objects = append(objects, &models.Object{
+			Class: "CodeSnippets",
+			Properties: map[string]any{
+				"file":      chunk.File,
+				"code":      chunk.Content,
+				"language":  chunk.Language,
+				"codeType":  chunk.Type,
+				"belongsTo": chunk.BelongsTo,
+			},
+		})
 	}
+
+	log.Printf("Size of objects %v", len(objects))
+
+	batchRes, err := embed.WeaviateClient.Batch().ObjectsBatcher().WithObjects(objects...).Do(context.Background())
+	if err != nil {
+		panic(err)
+	}
+
+	for _, res := range batchRes {
+		if res.Result.Errors != nil {
+			log.Println(res.Result.Errors)
+		}
+	}
+	//
+	fields := []graphql.Field{
+		{Name: "code"},
+		{Name: "language"},
+		{Name: "belongsTo"},
+		{Name: "file"},
+		{Name: "codeType"},
+	}
+
+	// openaiClient := openai.NewClient("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")
+
+	// nearVec := embed.WeaviateClient.GraphQL().NearVectorArgBuilder().WithVector(resp.Data[0].Embedding)
+	nearText := embed.WeaviateClient.GraphQL().
+		NearTextArgBuilder().
+		WithConcepts([]string{"health check"})
+
+	result, err := embed.WeaviateClient.GraphQL().Get().
+		WithClassName("CodeSnippets").
+		WithLimit(2).
+		WithNearText(nearText).
+		WithFields(fields...).
+		Do(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(result.Data)
 
 	return nil
 }

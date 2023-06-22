@@ -44,7 +44,21 @@ const LepoPrefix string = "LEPO_"
 
 var config *AppConfig
 
-func init() {
+func GetAppConfig() (*AppConfig, error) {
+	err := loadAppConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	if config != nil {
+		return config, nil
+	} else {
+		err := fmt.Errorf("error: AppConfig not found")
+		return nil, err
+	}
+}
+
+func loadAppConfig() error {
 	k := koanf.New(".")
 
 	if err := k.Load(file.Provider("app.toml"), toml.Parser()); err != nil {
@@ -55,23 +69,24 @@ func init() {
 		return strings.Replace(strings.ToLower(
 			strings.TrimPrefix(s, LepoPrefix)), "_", ".", -1)
 	}), nil); err != nil {
-		return
+		return err
+	}
+
+	if !validateConfig(k) {
+		return fmt.Errorf("error: Unable to load config")
 	}
 
 	var appConfig AppConfig
+
 	err := k.Unmarshal("", &appConfig)
 	if err != nil {
-		return
+		return err
 	}
 
 	config = &appConfig
+	return nil
 }
 
-func GetAppConfig() (*AppConfig, error) {
-	if config != nil {
-		return config, nil
-	} else {
-		err := fmt.Errorf("error: AppConfig not found")
-		return nil, err
-	}
+func validateConfig(k *koanf.Koanf) bool {
+	return (k.Exists("server") && k.Exists("planetscale") && k.Exists("weaviate"))
 }

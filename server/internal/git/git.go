@@ -1,40 +1,34 @@
 package git
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/go-git/go-git/v5"
 )
 
-type GitCloner struct {
+type GitCloner struct{}
+
+type GitCloneRequest struct {
 	URL        string
 	TargetPath string
 }
 
-type GitClonerOpts struct {
-	URL        string
-	TargetPath string
+func NewGitCloner() *GitCloner {
+	return &GitCloner{}
 }
 
-func NewGitCloner(opts GitClonerOpts) *GitCloner {
-	return &GitCloner{
-		URL:        opts.URL,
-		TargetPath: opts.TargetPath,
-	}
-}
-
-func (gc *GitCloner) Clone() error {
+func (gc *GitCloner) Clone(req GitCloneRequest) error {
 	// Validate URL
 	// Check if public repo
 	// Send clone request
-	r, err := git.PlainClone(gc.TargetPath, false, &git.CloneOptions{
-		URL:               gc.URL,
+	log.Println("Clone requested for", req.URL)
+	_, err := git.PlainClone(req.TargetPath, false, &git.CloneOptions{
+		URL:               req.URL,
 		RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 	})
 	if err != nil {
-		return nil
+		return err
 	}
-
-	fmt.Println(r.Branches())
+	log.Println("Clone completed for", req.URL, "location", req.TargetPath)
 	return nil
 }

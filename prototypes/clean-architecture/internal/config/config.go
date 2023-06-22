@@ -25,16 +25,18 @@ type DBConfig struct {
 	DatabaseName string `koanf:"db"`
 }
 
+const LepoPrefix string = "LEPO_"
+
 func GetAppConfig() (*AppConfig, error) {
 	k := koanf.New(".")
 
 	if err := k.Load(file.Provider("app.toml"), toml.Parser()); err != nil {
-		log.Println("Info: app.toml not found")
+		log.Println("info: app.toml not found. Looking from environment variables")
 	}
 
-	if err := k.Load(env.Provider("LEPO_", ".", func(s string) string {
+	if err := k.Load(env.Provider(LepoPrefix, ".", func(s string) string {
 		return strings.Replace(strings.ToLower(
-			strings.TrimPrefix(s, "LEPO_")), "_", ".", -1)
+			strings.TrimPrefix(s, LepoPrefix)), "_", ".", -1)
 	}), nil); err != nil {
 		log.Printf("Error loading config from environment %v \n", err)
 		return nil, err

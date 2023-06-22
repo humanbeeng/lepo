@@ -11,9 +11,8 @@ import (
 	"github.com/weaviate/weaviate/entities/models"
 )
 
-var WeaviateClient *weaviate.Client
-
 func BootStrapWeaviate() (*weaviate.Client, error) {
+	log.Println("Initializing Weaviate Client")
 	appConfig, err := config.GetAppConfig()
 	if err != nil {
 		return nil, err
@@ -33,28 +32,22 @@ func BootStrapWeaviate() (*weaviate.Client, error) {
 	}
 
 	className := "CodeSnippets"
-	err = client.Schema().AllDeleter().Do(context.TODO())
-	if err != nil {
-		log.Printf("err: Unable to delete all schema %v\n", err)
-		return nil, err
-	}
 
-	// Note: Use status code from ClassDeleter 400 to determine if class exists or not
-	exists, err := client.Schema().ClassExistenceChecker().WithClassName(className).Do(context.Background())
+	// // Note: Use status code from ClassDeleter 400 to determine if class exists or not
+	// exists, err := client.Schema().ClassExistenceChecker().WithClassName(className).Do(context.Background())
 
-	// TODO: Revisit and refactor
-	if exists {
-		log.Printf("%v already exists, deleting !\n", className)
-		err := client.Schema().ClassDeleter().WithClassName(className).Do(context.Background())
-		if err != nil {
-			log.Printf("Unable to delete %v\n", className)
-			return nil, err
-		}
-	} else {
-		log.Println(className, " does not exists")
-	}
+	// // TODO: Revisit and refactor
+	// if exists {
+	// 	log.Printf("%v already exists, deleting !\n", className)
+	// 	err := client.Schema().ClassDeleter().WithClassName(className).Do(context.Background())
+	// 	if err != nil {
+	// 		log.Printf("Unable to delete %v\n", className)
+	// 		return nil, err
+	// 	}
+	// } else {
+	// 	log.Println(className, " does not exists")
+	// }
 
-	WeaviateClient = client
 	classObj := &models.Class{
 		Class:      className,
 		Vectorizer: "text2vec-openai",
@@ -68,9 +61,18 @@ func BootStrapWeaviate() (*weaviate.Client, error) {
 		},
 	}
 
-	if client.Schema().ClassCreator().WithClass(classObj).Do(context.Background()) != nil {
-		log.Printf("error: %v", err)
+	exists, err := client.Schema().ClassExistenceChecker().WithClassName(className).Do(context.Background())
+	if err != nil {
 		panic(err)
+	}
+
+	if !exists {
+		if err := client.Schema().ClassCreator().WithClass(classObj).Do(context.Background()); err != nil {
+			log.Printf("error: Unable to create class %v", err)
+			panic(err)
+		}
+	} else {
+		client.Schema().ClassDeleter().WithClassName("CodeSnippets").Do(context.Background())
 	}
 
 	// Check weaviate status

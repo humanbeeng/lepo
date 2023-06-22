@@ -94,6 +94,10 @@ func (ge *GoExtractor) Extract(file string) ([]extract.Chunk, error) {
 			continue
 		}
 
+		if len(grepResults) == 0 {
+			continue
+		}
+
 		if chunkType == extract.Package {
 			result := grepResults[0]
 			packageStmt = result.Text

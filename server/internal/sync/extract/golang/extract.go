@@ -32,11 +32,11 @@ func NewGoExtractor() *GoExtractor {
 
 	targetTypesToRulesDir := make(map[extract.ChunkType]string)
 
-	targetTypesToRulesDir[extract.Struct] = "/home/personal/projects/lepo/server/internal/sync/extract/golang/rules/struct.yml"
-	targetTypesToRulesDir[extract.Method] = "/home/personal/projects/lepo/server/internal/sync/extract/golang/rules/method.yml"
-	targetTypesToRulesDir[extract.Function] = "/home/personal/projects/lepo/server/internal/sync/extract/golang/rules/function.yml"
-	targetTypesToRulesDir[extract.Import] = "/home/personal/projects/lepo/server/internal/sync/extract/golang/rules/import.yml"
-	targetTypesToRulesDir[extract.Package] = "/home/personal/projects/lepo/server/internal/sync/extract/golang/rules/package.yml"
+	targetTypesToRulesDir[extract.Struct] = "internal/sync/extract/golang/rules/struct.yml"
+	targetTypesToRulesDir[extract.Method] = "internal/sync/extract/golang/rules/method.yml"
+	targetTypesToRulesDir[extract.Function] = "internal/sync/extract/golang/rules/function.yml"
+	targetTypesToRulesDir[extract.Import] = "internal/sync/extract/golang/rules/import.yml"
+	targetTypesToRulesDir[extract.Package] = "internal/sync/extract/golang/rules/package.yml"
 
 	return &GoExtractor{
 		targetTypes:           targetTypes,

@@ -8,68 +8,70 @@ import (
 	"path/filepath"
 
 	"github.com/google/uuid"
-	"github.com/lepoai/lepo/server/internal/database"
 	"github.com/lepoai/lepo/server/internal/git"
 	"github.com/lepoai/lepo/server/internal/sync/extract"
 	"github.com/lepoai/lepo/server/internal/sync/extract/golang"
 	"github.com/lepoai/lepo/server/internal/sync/extract/java"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
 type GitSyncer struct {
 	languageToExtractor    map[string]extract.Extractor
 	ExcludedFolderPatterns []string
-	URL                    string
+	cloner                 *git.GitCloner
+	weaviate               *weaviate.Client
 }
 
 type GitSyncerOpts struct {
 	URL string
 }
 
-func NewGitSyncer(opts GitSyncerOpts) *GitSyncer {
+func NewGitSyncer(cloner *git.GitCloner, weaviate *weaviate.Client) *GitSyncer {
 	return &GitSyncer{
 		languageToExtractor:    buildSupportedLanguagesMap(),
 		ExcludedFolderPatterns: make([]string, 0),
-		URL:                    opts.URL,
+		cloner:                 cloner,
+		weaviate:               weaviate,
 	}
 }
 
-func (s *GitSyncer) Sync() error {
+func (s *GitSyncer) Sync(url string) error {
 	// TODO: Introduce goroutines and pass chunks as batch through channel to improve performance
 
 	syncId := uuid.New()
+	targetPath := filepath.Join("../temp/repo", syncId.String())
 
-	log.Printf("Sync job requested for %v\n", s.URL)
+	log.Printf("Sync job requested for %v\n", url)
 
 	// Clone repository
-	path := "/home/personal/projects/readonly/cloned/" + syncId.String()
-	clonerOpts := git.GitClonerOpts{
-		URL:        s.URL,
-		TargetPath: path,
+	req := git.GitCloneRequest{
+		URL:        url,
+		TargetPath: targetPath,
 	}
 
-	cloner := git.NewGitCloner(clonerOpts)
-
-	err := cloner.Clone()
+	err := s.cloner.Clone(req)
 	if err != nil {
 		log.Println("Clone failed", err)
 		return err
 	}
 
-	info, err := os.Stat(path)
+	info, err := os.Stat(targetPath)
 
 	if os.IsNotExist(err) {
-		return fmt.Errorf("error: %v does not exists\n", path)
+		return fmt.Errorf("error: %v does not exists\n", url)
 	}
 
 	if !info.IsDir() {
-		return fmt.Errorf("error: %v is not a directory\n", path)
+		return fmt.Errorf("error: %v is not a directory\n", url)
 	}
+
+	defer cleanup(targetPath)
 
 	var extractFailedFiles []string
 	var dirChunks []extract.Chunk
 
-	err = filepath.Walk(path,
+	err = filepath.Walk(targetPath,
 
 		// TODO: Exclude fileChunks
 		func(path string, info os.FileInfo, err error) error {
@@ -121,7 +123,7 @@ func (s *GitSyncer) Sync() error {
 
 	log.Printf("Number of objects %v\n", len(objects))
 
-	batchRes, err := database.WeaviateClient.Batch().ObjectsBatcher().WithObjects(objects...).Do(context.Background())
+	batchRes, err := s.weaviate.Batch().ObjectsBatcher().WithObjects(objects...).Do(context.Background())
 	if err != nil {
 		panic(err)
 	}
@@ -131,6 +133,8 @@ func (s *GitSyncer) Sync() error {
 			log.Println(res.Result.Errors)
 		}
 	}
+
+	log.Println("Sync completed for", syncId)
 	return nil
 }
 
@@ -139,4 +143,12 @@ func buildSupportedLanguagesMap() map[string]extract.Extractor {
 	supportedLanguages[".go"] = golang.NewGoExtractor()
 	supportedLanguages[".java"] = java.NewJavaExtractor()
 	return supportedLanguages
+}
+
+func cleanup(targetPath string) {
+	err := os.RemoveAll(targetPath)
+	log.Println("Cleaning up", targetPath)
+	if err != nil {
+		log.Println("warn: Unable to cleanup cloned repo", targetPath)
+	}
 }
