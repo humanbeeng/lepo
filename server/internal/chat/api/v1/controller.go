@@ -31,7 +31,6 @@ func (cont *ChatControllerV1) PostChat(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.ErrBadRequest.Code, fiber.ErrBadRequest.Message)
 	}
 
-	log.Printf("Received request %+v\n", req)
 	errors := validateStruct(req)
 
 	if errors != nil {
@@ -40,6 +39,8 @@ func (cont *ChatControllerV1) PostChat(c *fiber.Ctx) error {
 		}
 		return fiber.NewError(fiber.ErrBadRequest.Code, fiber.ErrBadRequest.Message)
 	}
+
+	fmt.Printf("Received request %+v\n", req)
 
 	resp, err := cont.resolver.Resolve(req)
 	if err != nil {
