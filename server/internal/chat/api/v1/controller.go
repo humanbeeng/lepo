@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-playground/validator"
 	"github.com/gofiber/fiber/v2"
-	"github.com/lepoai/lepo/server/internal/chat"
+	"github.com/humanbeeng/lepo/server/internal/chat"
 )
 
 type ChatControllerV1 struct {

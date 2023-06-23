@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	"github.com/lepoai/lepo/server/internal/sync"
+	"github.com/humanbeeng/lepo/server/internal/sync"
 )
 
 // TODO: Research more about project structure

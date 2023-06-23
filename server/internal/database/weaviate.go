@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/lepoai/lepo/server/internal/config"
+	"github.com/humanbeeng/lepo/server/internal/config"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/auth"
 	"github.com/weaviate/weaviate/entities/models"

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/lepoai/lepo/server/internal/chat"
+	"github.com/humanbeeng/lepo/server/internal/chat"
 	"github.com/sashabaranov/go-openai"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/graphql"

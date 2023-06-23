@@ -1,7 +1,7 @@
 package chat
 
 import (
-	"github.com/lepoai/lepo/server/internal/sync/extract"
+	"github.com/humanbeeng/lepo/server/internal/sync/extract"
 	"github.com/sashabaranov/go-openai"
 )
 

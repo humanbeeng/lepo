@@ -9,8 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/lepoai/lepo/server/internal/sync/execute"
-	"github.com/lepoai/lepo/server/internal/sync/extract"
+	"github.com/humanbeeng/lepo/server/internal/sync/execute"
+	"github.com/humanbeeng/lepo/server/internal/sync/extract"
 )
 
 type JavaExtractor struct {

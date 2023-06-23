@@ -1,4 +1,4 @@
-module github.com/lepoai/lepo/server
+module github.com/humanbeeng/lepo/server
 
 go 1.20
 
