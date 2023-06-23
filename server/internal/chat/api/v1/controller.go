@@ -2,6 +2,7 @@ package v1
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 
@@ -31,21 +32,23 @@ func (cont *ChatControllerV1) PostChat(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.ErrBadRequest.Code, fiber.ErrBadRequest.Message)
 	}
 
-	errors := validateStruct(req)
+	errs := validateStruct(req)
 
-	if errors != nil {
-		for _, e := range errors {
+	if errs != nil {
+		for _, e := range errs {
 			fmt.Println(e.Tag)
 		}
 		return fiber.NewError(fiber.ErrBadRequest.Code, fiber.ErrBadRequest.Message)
 	}
 
-	fmt.Printf("Received request %+v\n", req)
-
 	resp, err := cont.resolver.Resolve(req)
 	if err != nil {
+		if errors.Is(err, chat.InvalidCommand) {
+			return fiber.NewError(fiber.ErrBadRequest.Code, chat.InvalidCommand.Error())
+		}
+
 		log.Println("Unable to resolve", err)
-		return c.SendStatus(fiber.StatusInternalServerError)
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
 	r, _ := json.Marshal(resp)
