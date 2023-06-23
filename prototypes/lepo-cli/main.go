@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -40,12 +41,11 @@ type ChatResponse struct {
 	Response     string                         `json:"response"`
 	Conversation []openai.ChatCompletionMessage `json:"conversation"`
 	RepoID       string                         `json:"repo_id"`
-	// RepoID string
 	// TODO: Add Source[] once made available
 }
 
 func main() {
-	messages := make([]openai.ChatCompletionMessage, 0)
+	conversation := make([]openai.ChatCompletionMessage, 0)
 	reader := bufio.NewReader(os.Stdin)
 
 	fmt.Println("Chatbot init")
@@ -64,17 +64,20 @@ func main() {
 		chatReq := ChatRequest{
 			RepoID:       "1",
 			Query:        text,
-			Conversation: messages,
+			Conversation: conversation,
 			ChatCommand:  Ask,
 		}
-		fmt.Printf("Sending request %+v\n", chatReq)
 
 		b, err := json.Marshal(chatReq)
 		if err != nil {
 			panic(err)
 		}
 
-		resp, err := http.Post("http://localhost:3000/v1/chat", "application/json", bytes.NewBuffer(b))
+		resp, err := http.Post(
+			"http://localhost:3000/v1/chat",
+			"application/json",
+			bytes.NewBuffer(b),
+		)
 		if err != nil {
 			panic(err)
 		}
@@ -86,10 +89,11 @@ func main() {
 		err = json.Unmarshal([]byte(body), &chatResp)
 		if err != nil {
 			fmt.Println("Error unmarshaling data from request.")
+			continue
 		}
 
-		fmt.Println(chatResp.Response)
-
-		messages = chatResp.Conversation
+		yellow := color.New(color.FgYellow)
+		yellow.Println(chatResp.Response)
+		conversation = chatResp.Conversation
 	}
 }
