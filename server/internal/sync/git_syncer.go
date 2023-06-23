@@ -123,7 +123,10 @@ func (s *GitSyncer) Sync(url string) error {
 
 	log.Printf("Number of objects %v\n", len(objects))
 
-	batchRes, err := s.weaviate.Batch().ObjectsBatcher().WithObjects(objects...).Do(context.Background())
+	batchRes, err := s.weaviate.Batch().
+		ObjectsBatcher().
+		WithObjects(objects...).
+		Do(context.Background())
 	if err != nil {
 		panic(err)
 	}
@@ -136,6 +139,10 @@ func (s *GitSyncer) Sync(url string) error {
 
 	log.Println("Sync completed for", syncId)
 	return nil
+}
+
+func (s *GitSyncer) Desync() error {
+	return s.weaviate.Schema().AllDeleter().Do(context.Background())
 }
 
 func buildSupportedLanguagesMap() map[string]extract.Extractor {

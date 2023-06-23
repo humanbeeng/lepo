@@ -21,6 +21,7 @@ func NewSyncControllerV1(syncer sync.Syncer) *SyncControllerV1 {
 
 func AddV1SyncRoutes(router fiber.Router, controller *SyncControllerV1) {
 	router.Post("/sync", controller.HandleSyncRequest)
+	router.Post("/desync", controller.HandleDeSyncRequest)
 }
 
 func (s *SyncControllerV1) HandleSyncRequest(c *fiber.Ctx) error {
@@ -36,6 +37,25 @@ func (s *SyncControllerV1) HandleSyncRequest(c *fiber.Ctx) error {
 	}
 
 	err := s.syncer.Sync(req.URL)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *SyncControllerV1) HandleDeSyncRequest(c *fiber.Ctx) error {
+	req := new(sync.SyncRequest)
+
+	if err := c.BodyParser(req); err != nil {
+		return fiber.NewError(fiber.ErrBadRequest.Code, fiber.ErrBadRequest.Message)
+	}
+
+	errors := validateStruct(*req)
+	if errors != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(errors)
+	}
+
+	err := s.syncer.Desync()
 	if err != nil {
 		return err
 	}
