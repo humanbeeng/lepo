@@ -61,7 +61,10 @@ func BootStrapWeaviate() (*weaviate.Client, error) {
 		},
 	}
 
-	exists, err := client.Schema().ClassExistenceChecker().WithClassName(className).Do(context.Background())
+	exists, err := client.Schema().
+		ClassExistenceChecker().
+		WithClassName(className).
+		Do(context.Background())
 	if err != nil {
 		panic(err)
 	}
@@ -71,8 +74,6 @@ func BootStrapWeaviate() (*weaviate.Client, error) {
 			log.Printf("error: Unable to create class %v", err)
 			panic(err)
 		}
-	} else {
-		client.Schema().ClassDeleter().WithClassName("CodeSnippets").Do(context.Background())
 	}
 
 	// Check weaviate status
