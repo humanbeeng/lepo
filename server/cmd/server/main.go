@@ -11,6 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	chatapi "github.com/humanbeeng/lepo/server/internal/chat/api/v1"
+	"github.com/humanbeeng/lepo/server/internal/chat/function"
 	"github.com/humanbeeng/lepo/server/internal/chat/resolver"
 	config "github.com/humanbeeng/lepo/server/internal/config"
 	"github.com/humanbeeng/lepo/server/internal/database"
@@ -96,7 +97,9 @@ func initComponents(appConfig config.AppConfig) (*fiber.App, func(), error) {
 		return c.SendString("I'm healthy !")
 	})
 
-	resolver := resolver.NewOpenAIChatResolver(openai, wvt, zap)
+	codeCtxFunc := function.NewCodeContextFunction(wvt)
+
+	resolver := resolver.NewOpenAIChatResolver(openai, codeCtxFunc, zap)
 
 	chatController := chatapi.NewChatControllerV1(resolver)
 	chatapi.AddV1ChatRoutes(v1, chatController)
