@@ -10,7 +10,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.46.0
 	github.com/google/uuid v1.3.0
 	github.com/knadh/koanf v1.5.0
-	github.com/sashabaranov/go-openai v1.11.2
+	github.com/sashabaranov/go-openai v1.11.3
 	github.com/stretchr/testify v1.8.4
 	github.com/weaviate/weaviate v1.19.0
 	github.com/weaviate/weaviate-go-client/v4 v4.8.1
