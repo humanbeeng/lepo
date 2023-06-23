@@ -1,2 +1,2 @@
 # Lepo
-Your codebase expert
+Developer's personal assistant
