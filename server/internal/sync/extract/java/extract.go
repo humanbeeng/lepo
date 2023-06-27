@@ -5,20 +5,21 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/humanbeeng/lepo/server/internal/sync/execute"
 	"github.com/humanbeeng/lepo/server/internal/sync/extract"
+	"go.uber.org/zap"
 )
 
 type JavaExtractor struct {
 	targetTypes           []extract.ChunkType
 	targetTypesToRulesDir map[extract.ChunkType]string
+	logger                *zap.Logger
 }
 
-func NewJavaExtractor() *JavaExtractor {
+func NewJavaExtractor(logger *zap.Logger) *JavaExtractor {
 	var targetTypes []extract.ChunkType
 	targetTypes = append(targetTypes,
 		extract.Method,
@@ -38,13 +39,14 @@ func NewJavaExtractor() *JavaExtractor {
 	return &JavaExtractor{
 		targetTypes:           targetTypes,
 		targetTypesToRulesDir: targetTypesToRulesDir,
+		logger:                logger,
 	}
 }
 
 func (je *JavaExtractor) Extract(file string) ([]extract.Chunk, error) {
 	fileinfo, err := os.Stat(file)
 	if err != nil {
-		log.Printf("error: %v\n", err)
+		je.logger.Error("error:", zap.Error(err))
 		return nil, err
 	}
 
@@ -73,12 +75,12 @@ func (je *JavaExtractor) Extract(file string) ([]extract.Chunk, error) {
 		stdout, stderr, err := execute.CommandExecute(cmd)
 
 		if stderr != "" {
-			log.Printf("error: %v\n", stderr)
+			je.logger.Error("error:", zap.String("stderr", stderr))
 			continue
 		}
 
 		if err != nil {
-			log.Printf("error: %v\n", err)
+			je.logger.Error("error:", zap.Error(err))
 			continue
 		}
 
@@ -86,7 +88,7 @@ func (je *JavaExtractor) Extract(file string) ([]extract.Chunk, error) {
 
 		err = json.Unmarshal([]byte(stdout), &grepResults)
 		if err != nil {
-			log.Printf("error: Unable to unmarshal stdout %v", err)
+			je.logger.Error("Unable to unmarshal stdout", zap.Error(err))
 			continue
 		}
 
@@ -121,8 +123,6 @@ func (je *JavaExtractor) Extract(file string) ([]extract.Chunk, error) {
 		chunk.Module = packageStmt
 		chunks[idx] = chunk
 	}
-
-	fmt.Println(chunks)
 
 	return chunks, nil
 }

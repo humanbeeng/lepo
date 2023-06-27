@@ -14,6 +14,7 @@ import (
 	"github.com/humanbeeng/lepo/server/internal/sync/extract/java"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate"
 	"github.com/weaviate/weaviate/entities/models"
+	"go.uber.org/zap"
 )
 
 type GitSyncer struct {
@@ -21,18 +22,20 @@ type GitSyncer struct {
 	ExcludedFolderPatterns []string
 	cloner                 *git.GitCloner
 	weaviate               *weaviate.Client
+	logger                 *zap.Logger
 }
 
 type GitSyncerOpts struct {
 	URL string
 }
 
-func NewGitSyncer(cloner *git.GitCloner, weaviate *weaviate.Client) *GitSyncer {
+func NewGitSyncer(cloner *git.GitCloner, weaviate *weaviate.Client, logger *zap.Logger) *GitSyncer {
 	return &GitSyncer{
-		languageToExtractor:    buildSupportedLanguagesMap(),
+		languageToExtractor:    buildSupportedLanguagesMap(logger),
 		ExcludedFolderPatterns: make([]string, 0),
 		cloner:                 cloner,
 		weaviate:               weaviate,
+		logger:                 logger,
 	}
 }
 
@@ -42,7 +45,7 @@ func (s *GitSyncer) Sync(url string) error {
 	syncId := uuid.New()
 	targetPath := filepath.Join("../temp/repo", syncId.String())
 
-	log.Printf("Sync job requested for %v\n", url)
+	s.logger.Info("Sync job requested", zap.String("url", url))
 
 	// Clone repository
 	req := git.GitCloneRequest{
@@ -52,7 +55,7 @@ func (s *GitSyncer) Sync(url string) error {
 
 	err := s.cloner.Clone(req)
 	if err != nil {
-		log.Println("Clone failed", err)
+		s.logger.Error("Clone failed", zap.Error(err))
 		return err
 	}
 
@@ -66,7 +69,7 @@ func (s *GitSyncer) Sync(url string) error {
 		return fmt.Errorf("error: %v is not a directory\n", url)
 	}
 
-	defer cleanup(targetPath)
+	defer s.cleanup(targetPath)
 
 	var extractFailedFiles []string
 	var dirChunks []extract.Chunk
@@ -76,13 +79,12 @@ func (s *GitSyncer) Sync(url string) error {
 		// TODO: Exclude fileChunks
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				log.Printf("error: %v\n", err)
-				return err
+				return fmt.Errorf("error: %v\n", err)
 			}
 
 			if !info.IsDir() {
 				if extractor, ok := s.languageToExtractor[filepath.Ext(info.Name())]; ok {
-					log.Println("Starting extraction for :", path)
+					s.logger.Info("Starting extraction", zap.String("path", path))
 					fileChunks, err := extractor.Extract(path)
 					if err != nil {
 						extractFailedFiles = append(extractFailedFiles, info.Name())
@@ -95,13 +97,14 @@ func (s *GitSyncer) Sync(url string) error {
 		})
 
 	if err != nil {
-		log.Printf("error: %v\n", err)
+		s.logger.Error("Error while walking", zap.Error(err))
 	}
-	fmt.Println("Number of files chunked", len(dirChunks))
-	fmt.Println("Number of files failed", len(extractFailedFiles))
+
+	s.logger.Info("Number of files chunked", zap.Int("chunked", len(dirChunks)))
+	s.logger.Info("Number of files failed", zap.Int("failed", len(extractFailedFiles)))
 
 	if len(dirChunks) == 0 {
-		fmt.Println("No files found to chunk. Exiting")
+		s.logger.Warn("No files found to chunk. Exiting")
 		return nil
 	}
 
@@ -121,7 +124,7 @@ func (s *GitSyncer) Sync(url string) error {
 		})
 	}
 
-	log.Printf("Number of objects %v\n", len(objects))
+	s.logger.Info("Pushing to weaviate", zap.Int("objects", len(objects)))
 
 	batchRes, err := s.weaviate.Batch().
 		ObjectsBatcher().
@@ -133,11 +136,11 @@ func (s *GitSyncer) Sync(url string) error {
 
 	for _, res := range batchRes {
 		if res.Result.Errors != nil {
-			log.Println(res.Result.Errors)
+			s.logger.Warn("Error while pushing", zap.Any("errors", res.Result.Errors))
 		}
 	}
 
-	log.Println("Sync completed for", syncId)
+	s.logger.Info("Sync completed", zap.String("syncId", syncId.String()))
 	return nil
 }
 
@@ -145,16 +148,16 @@ func (s *GitSyncer) Desync() error {
 	return s.weaviate.Schema().AllDeleter().Do(context.Background())
 }
 
-func buildSupportedLanguagesMap() map[string]extract.Extractor {
+func buildSupportedLanguagesMap(logger *zap.Logger) map[string]extract.Extractor {
 	supportedLanguages := make(map[string]extract.Extractor)
-	supportedLanguages[".go"] = golang.NewGoExtractor()
-	supportedLanguages[".java"] = java.NewJavaExtractor()
+	supportedLanguages[".go"] = golang.NewGoExtractor(logger)
+	supportedLanguages[".java"] = java.NewJavaExtractor(logger)
 	return supportedLanguages
 }
 
-func cleanup(targetPath string) {
+func (s *GitSyncer) cleanup(targetPath string) {
 	err := os.RemoveAll(targetPath)
-	log.Println("Cleaning up", targetPath)
+	s.logger.Info("Cleaning up", zap.String("targetPath", targetPath))
 	if err != nil {
 		log.Println("warn: Unable to cleanup cloned repo", targetPath)
 	}

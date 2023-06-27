@@ -1,7 +1,7 @@
 package sync
 
 type Syncer interface {
-	Sync(url string) error
+	Sync(target string) error
 	Desync() error
 }
 type SyncRequest struct {

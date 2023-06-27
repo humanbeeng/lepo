@@ -11,14 +11,16 @@ import (
 
 	"github.com/humanbeeng/lepo/server/internal/sync/execute"
 	"github.com/humanbeeng/lepo/server/internal/sync/extract"
+	"go.uber.org/zap"
 )
 
 type GoExtractor struct {
 	targetTypes           []extract.ChunkType
 	targetTypesToRulesDir map[extract.ChunkType]string
+	logger                *zap.Logger
 }
 
-func NewGoExtractor() *GoExtractor {
+func NewGoExtractor(logger *zap.Logger) *GoExtractor {
 	var targetTypes []extract.ChunkType
 
 	targetTypes = append(
@@ -41,6 +43,7 @@ func NewGoExtractor() *GoExtractor {
 	return &GoExtractor{
 		targetTypes:           targetTypes,
 		targetTypesToRulesDir: targetTypesToRulesDir,
+		logger:                logger,
 	}
 }
 
@@ -48,7 +51,7 @@ func (ge *GoExtractor) Extract(file string) ([]extract.Chunk, error) {
 	// TODO: Move this to util package
 	fileinfo, err := os.Stat(file)
 	if err != nil {
-		log.Printf("error: %v does not exist %v", file, err)
+		err := fmt.Errorf("error: %v does not exist %v", file, err)
 		return nil, err
 	}
 
@@ -68,7 +71,7 @@ func (ge *GoExtractor) Extract(file string) ([]extract.Chunk, error) {
 
 	for chunkType, rulepath := range ge.targetTypesToRulesDir {
 		if _, err := os.Stat(rulepath); os.IsNotExist(err) {
-			log.Printf("error: %v rulepath does not exist", rulepath)
+			ge.logger.Warn("rulepath does not exist", zap.String("rulepath", rulepath))
 			continue
 		}
 
@@ -77,12 +80,12 @@ func (ge *GoExtractor) Extract(file string) ([]extract.Chunk, error) {
 		stdout, stderr, err := execute.CommandExecute(cmd)
 
 		if stderr != "" {
-			log.Printf("error: %v\n", stderr)
+			ge.logger.Error("stderr:", zap.String("stderr", stderr))
 			continue
 		}
 
 		if err != nil {
-			log.Printf("error: %v\n", err)
+			ge.logger.Error("error:", zap.Error(err))
 			continue
 		}
 

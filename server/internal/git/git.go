@@ -1,27 +1,30 @@
 package git
 
 import (
-	"log"
-
 	"github.com/go-git/go-git/v5"
+	"go.uber.org/zap"
 )
 
-type GitCloner struct{}
+type GitCloner struct {
+	logger *zap.Logger
+}
 
 type GitCloneRequest struct {
 	URL        string
 	TargetPath string
 }
 
-func NewGitCloner() *GitCloner {
-	return &GitCloner{}
+func NewGitCloner(logger *zap.Logger) *GitCloner {
+	return &GitCloner{
+		logger: logger,
+	}
 }
 
 func (gc *GitCloner) Clone(req GitCloneRequest) error {
 	// Validate URL
 	// Check if public repo
 	// Send clone request
-	log.Println("Clone requested for", req.URL)
+	gc.logger.Info("Clone requested", zap.String("url", req.URL))
 	_, err := git.PlainClone(req.TargetPath, false, &git.CloneOptions{
 		URL:               req.URL,
 		RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
@@ -29,6 +32,10 @@ func (gc *GitCloner) Clone(req GitCloneRequest) error {
 	if err != nil {
 		return err
 	}
-	log.Println("Clone completed for", req.URL, "location", req.TargetPath)
+	gc.logger.Info(
+		"Clone completed",
+		zap.String("url", req.URL),
+		zap.String("location", req.TargetPath),
+	)
 	return nil
 }
