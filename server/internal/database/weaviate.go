@@ -9,10 +9,13 @@ import (
 	"github.com/weaviate/weaviate-go-client/v4/weaviate"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/auth"
 	"github.com/weaviate/weaviate/entities/models"
+	"go.uber.org/zap"
 )
 
 func BootStrapWeaviate() (*weaviate.Client, error) {
-	log.Println("Initializing Weaviate Client")
+	// Revisit: Make this dynamic based on environment
+	logger, _ := zap.NewDevelopment()
+	logger.Info("Initializing Weaviate Client")
 	appConfig, err := config.GetAppConfig()
 	if err != nil {
 		return nil, err
@@ -34,19 +37,22 @@ func BootStrapWeaviate() (*weaviate.Client, error) {
 	className := "CodeSnippets"
 
 	// // Note: Use status code from ClassDeleter 400 to determine if class exists or not
-	// exists, err := client.Schema().ClassExistenceChecker().WithClassName(className).Do(context.Background())
+	exists, err := client.Schema().
+		ClassExistenceChecker().
+		WithClassName(className).
+		Do(context.Background())
 
 	// // TODO: Revisit and refactor
-	// if exists {
-	// 	log.Printf("%v already exists, deleting !\n", className)
-	// 	err := client.Schema().ClassDeleter().WithClassName(className).Do(context.Background())
-	// 	if err != nil {
-	// 		log.Printf("Unable to delete %v\n", className)
-	// 		return nil, err
-	// 	}
-	// } else {
-	// 	log.Println(className, " does not exists")
-	// }
+	if exists {
+		log.Printf("%v already exists, deleting !\n", className)
+		err := client.Schema().ClassDeleter().WithClassName(className).Do(context.Background())
+		if err != nil {
+			log.Printf("Unable to delete %v\n", className)
+			return nil, err
+		}
+	} else {
+		log.Println(className, " does not exists")
+	}
 
 	classObj := &models.Class{
 		Class:      className,
@@ -61,19 +67,9 @@ func BootStrapWeaviate() (*weaviate.Client, error) {
 		},
 	}
 
-	exists, err := client.Schema().
-		ClassExistenceChecker().
-		WithClassName(className).
-		Do(context.Background())
-	if err != nil {
+	if err := client.Schema().ClassCreator().WithClass(classObj).Do(context.Background()); err != nil {
+		logger.Info("Unable to create class", zap.Error(err))
 		panic(err)
-	}
-
-	if !exists {
-		if err := client.Schema().ClassCreator().WithClass(classObj).Do(context.Background()); err != nil {
-			log.Printf("error: Unable to create class %v", err)
-			panic(err)
-		}
 	}
 
 	// Check weaviate status
@@ -88,7 +84,7 @@ func BootStrapWeaviate() (*weaviate.Client, error) {
 		return nil, err
 	}
 
-	log.Println("info: Weaviate connection established")
+	logger.Info("Weaviate connection established")
 
 	return client, nil
 }

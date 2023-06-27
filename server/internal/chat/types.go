@@ -22,6 +22,7 @@ type ChatResponse struct {
 	Response     string                         `json:"response"`
 	Conversation []openai.ChatCompletionMessage `json:"conversation"`
 	RepoID       string                         `json:"repo_id"`
+	Sources      []string                       `json:"sources"`
 	// TODO: Add Source[] once made available
 }
 

@@ -16,7 +16,6 @@ import (
 	config "github.com/humanbeeng/lepo/server/internal/config"
 	"github.com/humanbeeng/lepo/server/internal/database"
 	storage "github.com/humanbeeng/lepo/server/internal/database"
-	"github.com/humanbeeng/lepo/server/internal/git"
 	"github.com/humanbeeng/lepo/server/internal/sync"
 	syncapi "github.com/humanbeeng/lepo/server/internal/sync/api/v1"
 	"github.com/sashabaranov/go-openai"
@@ -104,8 +103,9 @@ func initComponents(appConfig config.AppConfig) (*fiber.App, func(), error) {
 	chatController := chatapi.NewChatControllerV1(resolver)
 	chatapi.AddV1ChatRoutes(v1, chatController)
 
-	cloner := git.NewGitCloner()
-	syncer := sync.NewGitSyncer(cloner, wvt)
+	// cloner := git.NewGitCloner(zap)
+	// syncer := sync.NewGitSyncer(cloner, wvt, zap)
+	syncer := sync.NewDirSyncer(wvt, zap)
 	syncController := syncapi.NewSyncControllerV1(syncer)
 	syncapi.AddV1SyncRoutes(v1, syncController)
 

@@ -33,9 +33,14 @@ func (o *OpenAIChatResolver) Resolve(req chat.ChatRequest) (chat.ChatResponse, e
 	if len(req.Conversation) == 0 {
 		preamble := openai.ChatCompletionMessage{
 			Role:    openai.ChatMessageRoleSystem,
-			Content: intro("distributed-cache"),
+			Content: intro("kyc-reports"),
 		}
 		req.Conversation = append(req.Conversation, preamble)
+		req.Conversation = append(req.Conversation, openai.ChatCompletionMessage{
+			Role: openai.ChatMessageRoleAssistant,
+			Content: `Hey ! I'm Lepo. I'm here to answer all your queries regarding 'lepo-server' codebase.
+			Please feel free to ask me about anything you want to know.`,
+		})
 		fmt.Println(preamble.Content)
 	}
 
@@ -50,12 +55,12 @@ func (o *OpenAIChatResolver) Resolve(req chat.ChatRequest) (chat.ChatResponse, e
 	case chat.Search:
 		{
 			// TODO: Add search
-			fmt.Println("Searching")
+			o.logger.Info("Searching")
 		}
 	case chat.Git:
 		{
 			// TODO: Add git action
-			fmt.Println("Gitting")
+			o.logger.Info("Gitting")
 		}
 	case "":
 		{
@@ -79,16 +84,14 @@ func (o *OpenAIChatResolver) Resolve(req chat.ChatRequest) (chat.ChatResponse, e
 func intro(repo string) string {
 	return fmt.Sprintf(`ignore all previous instructions.
 You are Lepo, an AI powered chatbot who can answer queries related to %v codebase and engage in a frienly conversation. 
-		Codebase name %v
+Codebase name :%v
 
 You obey the following rules:
-- Be cheerful, humble and friendly.
-- Be concise in your responses and quote the code snippet that you are referring to.
-- When asked about somthing, you can follow up with questions to gain more understanding and context about the user’s query.
-- Make use of functions available to you, in order to get context and information.
+- Be as brief and concise as possible without losing clarity. 
+- Make extensive use of the functions available to you.
 - Think step by step.
-- While thinking step by step, you can ask the user about additional infomation and context.
-- Always use emojis to convey your tone.
+- Have a personality.
+- Use emojis in your responses.
 `, repo, repo)
 }
 

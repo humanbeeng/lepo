@@ -4,11 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/humanbeeng/lepo/server/internal/chat"
 	"github.com/humanbeeng/lepo/server/internal/chat/function"
 	"github.com/sashabaranov/go-openai"
+	"go.uber.org/zap"
 )
 
 func (o *OpenAIChatResolver) handleGeneralQuery(
@@ -28,11 +28,7 @@ func (o *OpenAIChatResolver) handleGeneralQuery(
 
 	conversation = append(conversation, message)
 
-	s, _ := json.Marshal(&chat.FunctionCall{Name: ctxFunc.Name})
-
-	fmt.Printf("Unmarshalled func call %s", s)
-
-	funcReq := openai.ChatCompletionRequest{
+	initReq := openai.ChatCompletionRequest{
 		Model:       openai.GPT3Dot5Turbo16K0613,
 		Messages:    conversation,
 		Functions:   functions,
@@ -41,49 +37,40 @@ func (o *OpenAIChatResolver) handleGeneralQuery(
 		FunctionCall: "auto",
 	}
 
-	fmt.Printf("%+v\n", funcReq)
-
-	res, err := o.openai.CreateChatCompletion(
+	initRes, err := o.openai.CreateChatCompletion(
 		context.Background(),
-		funcReq,
+		initReq,
 	)
-
-	fmt.Printf("Func call first response %+v\n", res)
-
-	fmt.Printf("%v\n", res.Choices[0].Message.FunctionCall)
-
 	if err != nil {
-		log.Printf("ChatCompletion error: %v\n", err)
-		return chat.ChatResponse{Response: "error", Conversation: conversation, RepoID: "1"}, err
+		o.logger.Error("ChatCompletion error", zap.Error(err))
+		return createErrorResponse(req.Conversation, req.RepoID), err
 	}
-	if len(res.Choices) == 0 {
-		return chat.ChatResponse{
-			Response:     "Something went wrong. Please try again",
-			Conversation: req.Conversation,
-			RepoID:       req.RepoID,
-		}, nil
+
+	if len(initRes.Choices) == 0 {
+		return createErrorResponse(req.Conversation, req.RepoID), err
 	}
-	choice := res.Choices[0]
+
+	choice := initRes.Choices[0]
 
 	if choice.FinishReason == openai.FinishReasonFunctionCall {
 		f := choice.Message.FunctionCall
 
 		var args function.FetchCodeContextRequest
+
 		err := json.Unmarshal([]byte(f.Arguments), &args)
 		if err != nil {
-			log.Println("Unable to parse query args")
+			o.logger.Error("Unable to parse query args", zap.Error(err))
 
-			return chat.ChatResponse{
-				Response:     "error",
-				Conversation: conversation,
-				RepoID:       req.RepoID,
-			}, err
+			return createErrorResponse(conversation, req.RepoID), err
 		}
+
+		o.logger.Info("Fetching context with args", zap.Any("args", args))
 
 		codeCtx, err := o.codeCtxFunc.FetchCodeContext(args)
 		if err != nil {
-			log.Printf("error: Unable to resolve code context\n")
+			o.logger.Error("Unable to resolve code context", zap.Error(err))
 		}
+		o.logger.Info("Number of snippets fetched", zap.Int("count", len(codeCtx)))
 
 		funcCtxMsg := openai.ChatCompletionMessage{
 			Role:    openai.ChatMessageRoleFunction,
@@ -102,21 +89,24 @@ func (o *OpenAIChatResolver) handleGeneralQuery(
 
 		funcCtxRes, err := o.openai.CreateChatCompletion(context.Background(), funcCtxReq)
 		if err != nil || len(funcCtxRes.Choices) == 0 {
-			return chat.ChatResponse{
-				Response:     "Something went wrong. Please try again",
-				Conversation: conversation,
-				RepoID:       req.RepoID,
-			}, nil
+			return createErrorResponse(conversation, req.RepoID), err
 		}
 
 		funcCtxResChoice := funcCtxRes.Choices[0]
 
 		conversation = append(conversation, funcCtxResChoice.Message)
 
+		sources := make([]string, 0)
+
+		for _, s := range codeCtx {
+			sources = append(sources, s.File)
+		}
+
 		return chat.ChatResponse{
 			Response:     funcCtxResChoice.Message.Content,
 			Conversation: conversation,
 			RepoID:       req.RepoID,
+			Sources:      sources,
 		}, nil
 	}
 
@@ -127,4 +117,15 @@ func (o *OpenAIChatResolver) handleGeneralQuery(
 		Conversation: conversation,
 		RepoID:       req.RepoID,
 	}, nil
+}
+
+func createErrorResponse(
+	conversation []openai.ChatCompletionMessage,
+	repoID string,
+) chat.ChatResponse {
+	return chat.ChatResponse{
+		Response:     "Something went wrong 😢. Please try again 🙇.",
+		Conversation: conversation,
+		RepoID:       repoID,
+	}
 }
