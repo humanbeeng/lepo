@@ -1,15 +1,14 @@
 package java
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
-	"github.com/humanbeeng/lepo/server/internal/sync/execute"
 	"github.com/humanbeeng/lepo/server/internal/sync/extract"
+	sitter "github.com/smacker/go-tree-sitter"
+	"github.com/smacker/go-tree-sitter/golang"
 	"go.uber.org/zap"
 )
 
@@ -61,68 +60,63 @@ func (je *JavaExtractor) Extract(file string) ([]extract.Chunk, error) {
 		return nil, err
 	}
 
-	var packageStmt string
-	var chunks []extract.Chunk
+	lang := golang.GetLanguage()
+	parser := sitter.NewParser()
+	parser.SetLanguage(lang)
 
-	for chunkType, rulepath := range je.targetTypesToRulesDir {
-		if _, err := os.Stat(rulepath); os.IsNotExist(err) {
-			err = fmt.Errorf("%v rulepath does not exist", rulepath)
-			return nil, err
-		}
-
-		cmd := fmt.Sprintf("ast-grep scan -r %v %v --json", rulepath, file)
-
-		stdout, stderr, err := execute.CommandExecute(cmd)
-
-		if stderr != "" {
-			je.logger.Error("error:", zap.String("stderr", stderr))
-			continue
-		}
-
-		if err != nil {
-			je.logger.Error("error:", zap.Error(err))
-			continue
-		}
-
-		var grepResults []extract.GrepResult
-
-		err = json.Unmarshal([]byte(stdout), &grepResults)
-		if err != nil {
-			je.logger.Error("Unable to unmarshal stdout", zap.Error(err))
-			continue
-		}
-
-		if len(grepResults) == 0 {
-			continue
-		}
-
-		if chunkType == extract.Package {
-			result := grepResults[0]
-			packageStmt = result.Text
-		}
-
-		hasher := sha256.New()
-
-		for _, result := range grepResults {
-			hasher.Write([]byte(result.Text))
-			contentHash := hex.EncodeToString(hasher.Sum(nil))
-			chunk := extract.Chunk{
-				File:        result.File,
-				Language:    extract.Java,
-				Type:        chunkType,
-				Content:     result.Text,
-				ContentHash: contentHash,
-			}
-			chunks = append(chunks, chunk)
-			hasher.Reset()
-		}
+	b, err := ioutil.ReadFile(file) // b has type []byte
+	if err != nil {
+		err := fmt.Errorf("error: Unable to read %v", file)
+		return nil, err
 	}
 
-	// Populate package name to all chunks
-	for idx, chunk := range chunks {
-		chunk.Module = packageStmt
-		chunks[idx] = chunk
+	tree := parser.Parse(nil, b)
+
+	q, err := sitter.NewQuery([]byte(`(
+	(package_declaration)? @package
+    (import_declaration)? @imports
+    
+    
+    (line_comment)? @line_comment
+	(
+    	class_declaration
+        
+        body: (
+        	class_body
+			(field_declaration)? @field_declaration
+            (constructor_declaration)? @constructor
+			(	
+            	(line_comment)? @method_line_comment
+            	(block_comment)? @method_block_comment
+            	(method_declaration
+            		(throws)? @exception_signature
+            	)? @method_declaration
+            )  
+            (class_declaration)? @inner_class
+        )
+        
+    )? @class_declaration
+)`), lang)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to create query")
 	}
 
-	return chunks, nil
+	n := tree.RootNode()
+
+	qc := sitter.NewQueryCursor()
+	qc.Exec(q, n)
+
+	var funcs []*sitter.Node
+	for {
+		m, ok := qc.NextMatch()
+		if !ok {
+			break
+		}
+
+		for _, c := range m.Captures {
+			funcs = append(funcs, c.Node)
+			fmt.Println("-", funcName(input, c.Node))
+		}
+	}
+	return nil, err
 }

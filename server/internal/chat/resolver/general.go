@@ -96,10 +96,18 @@ func (o *OpenAIChatResolver) handleGeneralQuery(
 
 		conversation = append(conversation, funcCtxResChoice.Message)
 
-		sources := make([]string, 0)
+		m := make(map[string]bool, 0)
 
 		for _, s := range codeCtx {
-			sources = append(sources, s.File)
+			_, exists := m[s.File]
+			if !exists {
+				m[s.File] = true
+			}
+		}
+		sources := make([]string, 0)
+
+		for k := range m {
+			sources = append(sources, k)
 		}
 
 		return chat.ChatResponse{

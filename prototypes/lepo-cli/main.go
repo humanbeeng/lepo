@@ -41,7 +41,7 @@ type ChatResponse struct {
 	Response     string                         `json:"response"`
 	Conversation []openai.ChatCompletionMessage `json:"conversation"`
 	RepoID       string                         `json:"repo_id"`
-	// TODO: Add Source[] once made available
+	Sources      []string                       `json:"sources"`
 }
 
 func main() {
@@ -65,7 +65,6 @@ func main() {
 			RepoID:       "1",
 			Query:        text,
 			Conversation: conversation,
-			ChatCommand:  Ask,
 		}
 
 		b, err := json.Marshal(chatReq)
@@ -93,6 +92,9 @@ func main() {
 		}
 
 		yellow := color.New(color.FgYellow)
+		fmt.Println("-----------")
+		yellow.Println(chatResp.Sources)
+		fmt.Println("-----------")
 		yellow.Println(chatResp.Response)
 		conversation = chatResp.Conversation
 	}

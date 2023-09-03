@@ -53,6 +53,22 @@ func BootStrapWeaviate() (*weaviate.Client, error) {
 	} else {
 		log.Println(className, " does not exists")
 	}
+	classProps := make([]models.Property, 0)
+
+	classProps = append(classProps, models.Property{
+		Name:        "classname",
+		Description: "Name of the class",
+		DataType:    []string{"string"},
+	})
+
+	classProps = append(classProps, models.Property{
+		Name:     "code",
+		DataType: []string{"string"},
+	})
+
+	classProps = append(classProps, models.Property{
+		Name: "package",
+	})
 
 	classObj := &models.Class{
 		Class:      className,
@@ -62,7 +78,7 @@ func BootStrapWeaviate() (*weaviate.Client, error) {
 				"model":              "ada",
 				"modelVersion":       "002",
 				"type":               "text",
-				"vectorizeClassName": true,
+				"vectorizeClassName": false,
 			},
 		},
 	}

@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/sashabaranov/go-openai"
+	"github.com/sashabaranov/go-openai/jsonschema"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/graphql"
 )
@@ -70,11 +71,11 @@ func (f *CodeContextFunction) FetchCodeContext(req FetchCodeContextRequest) ([]C
 
 func (f *CodeContextFunction) NewCodeContextFunctionDefinition() openai.FunctionDefinition {
 	// create openai function call params
-	params := openai.JSONSchemaDefinition{
-		Type: openai.JSONSchemaTypeObject,
-		Properties: map[string]openai.JSONSchemaDefinition{
+	params := jsonschema.Definition{
+		Type: jsonschema.Object,
+		Properties: map[string]jsonschema.Definition{
 			"query": {
-				Type:        openai.JSONSchemaTypeString,
+				Type:        jsonschema.String,
 				Description: "context free natural language query string",
 			},
 		},

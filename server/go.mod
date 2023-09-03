@@ -10,7 +10,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.46.0
 	github.com/google/uuid v1.3.0
 	github.com/knadh/koanf v1.5.0
-	github.com/sashabaranov/go-openai v1.11.3
+	github.com/sashabaranov/go-openai v1.12.0
 	github.com/stretchr/testify v1.8.4
 	github.com/weaviate/weaviate v1.19.0
 	github.com/weaviate/weaviate-go-client/v4 v4.8.1
@@ -68,6 +68,7 @@ require (
 	github.com/savsgio/gotils v0.0.0-20230208104028-c358bd845dee // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/skeema/knownhosts v1.1.1 // indirect
+	github.com/smacker/go-tree-sitter v0.0.0-20230501083651-a7d92773b3aa // indirect
 	github.com/tinylib/msgp v1.1.8 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.47.0 // indirect
