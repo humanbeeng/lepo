@@ -13,6 +13,8 @@ type ChatResolver interface {
 type ChatRequest struct {
 	// Note: Add other metadata once made available
 	Query        string                         `json:"query"        validate:"required"`
+	File         string                         `json:"file"`
+	Selection    string                         `json:"selection"`
 	Conversation []openai.ChatCompletionMessage `json:"conversation" validate:"required"`
 	ChatCommand  ChatCommand                    `json:"chat_command"`
 	RepoID       string                         `json:"repo_id"      validate:"required"`

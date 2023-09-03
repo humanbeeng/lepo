@@ -150,7 +150,7 @@ func (s *GitSyncer) Desync() error {
 
 func buildSupportedLanguagesMap(logger *zap.Logger) map[string]extract.Extractor {
 	supportedLanguages := make(map[string]extract.Extractor)
-	supportedLanguages[".go"] = golang.NewGoExtractor(logger)
+	supportedLanguages[".go"] = golang.NewGoExtractor()
 	supportedLanguages[".java"] = java.NewJavaExtractor(logger)
 	return supportedLanguages
 }

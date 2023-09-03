@@ -1,16 +1,16 @@
 package java
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/humanbeeng/lepo/server/internal/sync/execute"
-	"github.com/humanbeeng/lepo/server/internal/sync/extract"
+	sitter "github.com/smacker/go-tree-sitter"
+	"github.com/smacker/go-tree-sitter/java"
 	"go.uber.org/zap"
+
+	"github.com/humanbeeng/lepo/server/internal/sync/extract"
 )
 
 type JavaExtractor struct {
@@ -61,68 +61,139 @@ func (je *JavaExtractor) Extract(file string) ([]extract.Chunk, error) {
 		return nil, err
 	}
 
-	var packageStmt string
-	var chunks []extract.Chunk
+	lang := java.GetLanguage()
+	parser := sitter.NewParser()
+	parser.SetLanguage(lang)
 
-	for chunkType, rulepath := range je.targetTypesToRulesDir {
-		if _, err := os.Stat(rulepath); os.IsNotExist(err) {
-			err = fmt.Errorf("%v rulepath does not exist", rulepath)
-			return nil, err
-		}
+	// fb, err := os.ReadFile(file) // b has type []byte
+	// if err != nil {
+	// err := fmt.Errorf("error: Unable to read %v", file)
+	// return nil, err
+	// }
 
-		cmd := fmt.Sprintf("ast-grep scan -r %v %v --json", rulepath, file)
+	fb := `
 
-		stdout, stderr, err := execute.CommandExecute(cmd)
+package com.kyc.report.gst.generator.internal;
 
-		if stderr != "" {
-			je.logger.Error("error:", zap.String("stderr", stderr))
-			continue
-		}
+import static com.kyc.api.CommonConstants.GST;
+import static com.kyc.core.util.KYCConstants.DOT;
+import static com.kyc.core.util.KYCConstants.JSON;
+import static com.kyc.core.util.KYCConstants.UNDERSCORE;
+import static com.kyc.core.util.KYCConstants.XML;
 
-		if err != nil {
-			je.logger.Error("error:", zap.Error(err))
-			continue
-		}
 
-		var grepResults []extract.GrepResult
+// This is a line comment
+class Outer_Demo {
+   int num;
+   
+   @Inject
+   public Outer_Demo()  {
+   	
+   }
+   
+   Outer_Demo(int num) {
+   	this.num = num;
+   }
+   
+   /**
+   This is a block comment
+   */
+   public void hello() {
+   
+   }
 
-		err = json.Unmarshal([]byte(stdout), &grepResults)
-		if err != nil {
-			je.logger.Error("Unable to unmarshal stdout", zap.Error(err))
-			continue
-		}
+	public void hi(){}
 
-		if len(grepResults) == 0 {
-			continue
-		}
+	public void lmao(){}
+   
+   // inner class
+   private class Inner_Demo {
+      public void print() throws RuntimeException {
+         System.out.println("This is an inner class");
+      }
+   }
+   
+  static Outer o = new Outer() {
+        void show()
+        {
+            super.show();
+            System.out.println("Demo class");
+        }
+    };
+    
+     void outerMethod()
+    {
+        System.out.println("Outer Method");
+        class Inner {
+            void innerMethod()
+            {
+                System.out.println("Inner Method");
+            }
+        }
+ 
+        Inner y = new Inner();
+        y.innerMethod();
+    }
+   
+   // Accessing he inner class from the method within
+   void display_Inner() {
+      Inner_Demo inner = new Inner_Demo();
+      inner.print();
+   }
+}
+	`
 
-		if chunkType == extract.Package {
-			result := grepResults[0]
-			packageStmt = result.Text
-		}
+	tree, _ := parser.ParseCtx(context.Background(), nil, []byte(fb))
+	// queryString := `((class_declaration) @declaration.class)`
+	queryString := `
+(
+    	class_declaration
+        body: (
+        	class_body(	
+            (method_declaration)* @declaration.method
+          )  
+        )
+        
+    )* @declaration.class
+	`
 
-		hasher := sha256.New()
-
-		for _, result := range grepResults {
-			hasher.Write([]byte(result.Text))
-			contentHash := hex.EncodeToString(hasher.Sum(nil))
-			chunk := extract.Chunk{
-				File:        result.File,
-				Language:    extract.Java,
-				Type:        chunkType,
-				Content:     result.Text,
-				ContentHash: contentHash,
-			}
-			chunks = append(chunks, chunk)
-			hasher.Reset()
-		}
+	q, err := sitter.NewQuery([]byte(queryString), lang)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to create query")
 	}
 
-	// Populate package name to all chunks
-	for idx, chunk := range chunks {
-		chunk.Module = packageStmt
-		chunks[idx] = chunk
-	}
+	rootNode := tree.RootNode()
 
-	return chunks, nil
+	qc := sitter.NewQueryCursor()
+	qc.Exec(q, rootNode)
+
+	var funcs []*sitter.Node
+	f, _ := os.Create("tmp")
+	defer f.Close()
+	i := 0
+
+	for {
+		m, ok := qc.NextMatch()
+		i++
+		if !ok {
+			break
+		}
+
+		for _, c := range m.Captures {
+			funcs = append(funcs, c.Node)
+			f.WriteString(funcName([]byte(fb), c.Node))
+		}
+	}
+	fmt.Println("for ", i)
+	return nil, err
+}
+
+func funcName(content []byte, n *sitter.Node) string {
+	if n == nil {
+		return ""
+	}
+	fmt.Println("Number of named nodes", n.NamedChildCount())
+	fmt.Println("Field Name", n.FieldNameForChild(0))
+
+	return fmt.Sprintf("\n\n-Type: %v \nContent\n %v \n----------", n.Type(), n.Content(content))
 }
