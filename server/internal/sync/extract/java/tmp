@@ -1,0 +1,114 @@
+
+
+-Type: class_declaration 
+Content
+ private class Inner_Demo {
+      public void print() throws RuntimeException {
+         System.out.println("This is an inner class");
+      }
+   } 
+----------
+
+-Type: method_declaration 
+Content
+ public void print() throws RuntimeException {
+         System.out.println("This is an inner class");
+      } 
+----------
+
+-Type: class_declaration 
+Content
+ class Inner {
+            void innerMethod()
+            {
+                System.out.println("Inner Method");
+            }
+        } 
+----------
+
+-Type: method_declaration 
+Content
+ void innerMethod()
+            {
+                System.out.println("Inner Method");
+            } 
+----------
+
+-Type: class_declaration 
+Content
+ class Outer_Demo {
+   int num;
+   
+   @Inject
+   public Outer_Demo()  {
+   	
+   }
+   
+   Outer_Demo(int num) {
+   	this.num = num;
+   }
+   
+   /**
+   This is a block comment
+   */
+   public void hello() {
+   
+   }
+
+	public void hi(){}
+
+	public void lmao(){}
+   
+   // inner class
+   private class Inner_Demo {
+      public void print() throws RuntimeException {
+         System.out.println("This is an inner class");
+      }
+   }
+   
+  static Outer o = new Outer() {
+        void show()
+        {
+            super.show();
+            System.out.println("Demo class");
+        }
+    };
+    
+     void outerMethod()
+    {
+        System.out.println("Outer Method");
+        class Inner {
+            void innerMethod()
+            {
+                System.out.println("Inner Method");
+            }
+        }
+ 
+        Inner y = new Inner();
+        y.innerMethod();
+    }
+   
+   // Accessing he inner class from the method within
+   void display_Inner() {
+      Inner_Demo inner = new Inner_Demo();
+      inner.print();
+   }
+} 
+----------
+
+-Type: method_declaration 
+Content
+ public void hello() {
+   
+   } 
+----------
+
+-Type: method_declaration 
+Content
+ public void hi(){} 
+----------
+
+-Type: method_declaration 
+Content
+ public void lmao(){} 
+----------

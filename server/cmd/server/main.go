@@ -10,6 +10,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/sashabaranov/go-openai"
+	"go.uber.org/zap"
+
 	chatapi "github.com/humanbeeng/lepo/server/internal/chat/api/v1"
 	"github.com/humanbeeng/lepo/server/internal/chat/function"
 	"github.com/humanbeeng/lepo/server/internal/chat/resolver"
@@ -18,8 +21,6 @@ import (
 	storage "github.com/humanbeeng/lepo/server/internal/database"
 	"github.com/humanbeeng/lepo/server/internal/sync"
 	syncapi "github.com/humanbeeng/lepo/server/internal/sync/api/v1"
-	"github.com/sashabaranov/go-openai"
-	"go.uber.org/zap"
 )
 
 func main() {

@@ -1,15 +1,16 @@
 package java
 
 import (
+	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
-	"github.com/humanbeeng/lepo/server/internal/sync/extract"
 	sitter "github.com/smacker/go-tree-sitter"
-	"github.com/smacker/go-tree-sitter/golang"
+	"github.com/smacker/go-tree-sitter/java"
 	"go.uber.org/zap"
+
+	"github.com/humanbeeng/lepo/server/internal/sync/extract"
 )
 
 type JavaExtractor struct {
@@ -60,63 +61,139 @@ func (je *JavaExtractor) Extract(file string) ([]extract.Chunk, error) {
 		return nil, err
 	}
 
-	lang := golang.GetLanguage()
+	lang := java.GetLanguage()
 	parser := sitter.NewParser()
 	parser.SetLanguage(lang)
 
-	b, err := ioutil.ReadFile(file) // b has type []byte
-	if err != nil {
-		err := fmt.Errorf("error: Unable to read %v", file)
-		return nil, err
-	}
+	// fb, err := os.ReadFile(file) // b has type []byte
+	// if err != nil {
+	// err := fmt.Errorf("error: Unable to read %v", file)
+	// return nil, err
+	// }
 
-	tree := parser.Parse(nil, b)
+	fb := `
 
-	q, err := sitter.NewQuery([]byte(`(
-	(package_declaration)? @package
-    (import_declaration)? @imports
+package com.kyc.report.gst.generator.internal;
+
+import static com.kyc.api.CommonConstants.GST;
+import static com.kyc.core.util.KYCConstants.DOT;
+import static com.kyc.core.util.KYCConstants.JSON;
+import static com.kyc.core.util.KYCConstants.UNDERSCORE;
+import static com.kyc.core.util.KYCConstants.XML;
+
+
+// This is a line comment
+class Outer_Demo {
+   int num;
+   
+   @Inject
+   public Outer_Demo()  {
+   	
+   }
+   
+   Outer_Demo(int num) {
+   	this.num = num;
+   }
+   
+   /**
+   This is a block comment
+   */
+   public void hello() {
+   
+   }
+
+	public void hi(){}
+
+	public void lmao(){}
+   
+   // inner class
+   private class Inner_Demo {
+      public void print() throws RuntimeException {
+         System.out.println("This is an inner class");
+      }
+   }
+   
+  static Outer o = new Outer() {
+        void show()
+        {
+            super.show();
+            System.out.println("Demo class");
+        }
+    };
     
-    
-    (line_comment)? @line_comment
-	(
+     void outerMethod()
+    {
+        System.out.println("Outer Method");
+        class Inner {
+            void innerMethod()
+            {
+                System.out.println("Inner Method");
+            }
+        }
+ 
+        Inner y = new Inner();
+        y.innerMethod();
+    }
+   
+   // Accessing he inner class from the method within
+   void display_Inner() {
+      Inner_Demo inner = new Inner_Demo();
+      inner.print();
+   }
+}
+	`
+
+	tree, _ := parser.ParseCtx(context.Background(), nil, []byte(fb))
+	// queryString := `((class_declaration) @declaration.class)`
+	queryString := `
+(
     	class_declaration
-        
         body: (
-        	class_body
-			(field_declaration)? @field_declaration
-            (constructor_declaration)? @constructor
-			(	
-            	(line_comment)? @method_line_comment
-            	(block_comment)? @method_block_comment
-            	(method_declaration
-            		(throws)? @exception_signature
-            	)? @method_declaration
-            )  
-            (class_declaration)? @inner_class
+        	class_body(	
+            (method_declaration)* @declaration.method
+          )  
         )
         
-    )? @class_declaration
-)`), lang)
+    )* @declaration.class
+	`
+
+	q, err := sitter.NewQuery([]byte(queryString), lang)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to create query")
 	}
 
-	n := tree.RootNode()
+	rootNode := tree.RootNode()
 
 	qc := sitter.NewQueryCursor()
-	qc.Exec(q, n)
+	qc.Exec(q, rootNode)
 
 	var funcs []*sitter.Node
+	f, _ := os.Create("tmp")
+	defer f.Close()
+	i := 0
+
 	for {
 		m, ok := qc.NextMatch()
+		i++
 		if !ok {
 			break
 		}
 
 		for _, c := range m.Captures {
 			funcs = append(funcs, c.Node)
-			fmt.Println("-", funcName(input, c.Node))
+			f.WriteString(funcName([]byte(fb), c.Node))
 		}
 	}
+	fmt.Println("for ", i)
 	return nil, err
+}
+
+func funcName(content []byte, n *sitter.Node) string {
+	if n == nil {
+		return ""
+	}
+	fmt.Println("Number of named nodes", n.NamedChildCount())
+	fmt.Println("Field Name", n.FieldNameForChild(0))
+
+	return fmt.Sprintf("\n\n-Type: %v \nContent\n %v \n----------", n.Type(), n.Content(content))
 }

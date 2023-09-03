@@ -6,10 +6,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/humanbeeng/lepo/server/internal/sync/extract"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate"
 	"github.com/weaviate/weaviate/entities/models"
 	"go.uber.org/zap"
+
+	"github.com/humanbeeng/lepo/server/internal/sync/extract"
 )
 
 // TODO: Delete this
