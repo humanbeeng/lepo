@@ -36,26 +36,42 @@ func (g *GoExtractor) Extract(pkgstr string) error {
 		// If this is your own package, process its structs.
 		// TODO : Move this inside if condition below
 
-		sv := &StructVisitor{
-			Fset:      fset,
-			Info:      pkg.TypesInfo,
-			TypeDecls: make(map[string]TypeDecl),
-			Members:   make(map[string]Member),
+		// sv := &StructVisitor{
+		// 	Fset:      fset,
+		// 	Info:      pkg.TypesInfo,
+		// 	TypeDecls: make(map[string]TypeDecl),
+		// 	Members:   make(map[string]Member),
+		// }
+		// iv := &InterfaceVisitor{
+		// 	Fset:      fset,
+		// 	Info:      pkg.TypesInfo,
+		// 	TypeDecls: make(map[string]TypeDecl),
+		// 	Members:   make(map[string]Member),
+		// }
+
+		mv := &MethodVisitor{
+			Fset:    fset,
+			Info:    pkg.TypesInfo,
+			Methods: make(map[string]Function),
 		}
 
 		if strings.Contains(pkg.PkgPath, pkgstr) {
 			for _, syn := range pkg.Syntax {
-				ast.Walk(sv, syn)
+				ast.Walk(mv, syn)
 			}
 		}
 
-		for _, v := range sv.TypeDecls {
-			pp.Println("Struct:\n", v)
+		for _, m := range mv.Methods {
+			pp.Println("Method", m)
 		}
 
-		for _, v := range sv.Members {
-			pp.Println("Member:", v)
-		}
+		// for _, v := range sv.TypeDecls {
+		// 	pp.Println("Struct:\n", v)
+		// }
+		//
+		// for _, v := range sv.Members {
+		// 	pp.Println("Member:", v)
+		// }
 	})
 
 	return nil

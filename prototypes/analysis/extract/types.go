@@ -66,11 +66,15 @@ type Member struct {
 }
 
 type Function struct {
-	Node
-	QualifiedName string
-	Returns       []TypeDecl
-	Params        []TypeDecl
-	ParentType    TypeDecl
+	Name        string
+	QName       string
+	ParentQName string
+	Code        string
+	Pos         int
+	End         int
+	Filepath    string
+	// Returns     []TypeDecl
+	// Params      []TypeDecl
 }
 
 func NewGoExtractor() *GoExtractor {
