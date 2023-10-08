@@ -14,7 +14,7 @@ type InterfaceVisitor struct {
 	ast.Visitor
 	Fset      *token.FileSet
 	Info      *types.Info
-	TypeDecls map[string]TypeDecl
+	TypeDecls map[string]TypeDef
 	Members   map[string]Member
 	Files     map[string][]byte
 }
@@ -53,7 +53,7 @@ func (v *InterfaceVisitor) Visit(node ast.Node) ast.Visitor {
 
 						infCode = buf.String()
 
-						td := TypeDecl{
+						td := TypeDef{
 							Name:       ts.Name.Name,
 							QName:      infQname,
 							Type:       tsObj.Type().String(),
@@ -61,7 +61,7 @@ func (v *InterfaceVisitor) Visit(node ast.Node) ast.Visitor {
 							Kind:       Interface,
 							Pos:        pos,
 							End:        end,
-							Filepath:   filepath,
+							File:       filepath,
 							Code:       infCode,
 						}
 						pp.Println("Interface", td)

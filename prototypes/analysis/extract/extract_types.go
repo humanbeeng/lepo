@@ -6,14 +6,13 @@ import (
 	"go/format"
 	"go/token"
 	"go/types"
-	"strings"
 )
 
 type StructVisitor struct {
 	ast.Visitor
 	Fset      *token.FileSet
 	Info      *types.Info
-	TypeDecls map[string]TypeDecl
+	TypeDecls map[string]TypeDef
 	Members   map[string]Member
 	Files     map[string][]byte
 }
@@ -34,77 +33,81 @@ func (v *StructVisitor) Visit(node ast.Node) ast.Visitor {
 		{
 			for _, s := range n.Specs {
 				if ts, ok := s.(*ast.TypeSpec); ok {
-					tsObj := v.Info.Defs[ts.Name]
+					ob := v.Info.Defs[ts.Name]
 
 					if st, ok := ts.Type.(*ast.StructType); ok {
-						stQName := tsObj.Pkg().Path() + "." + ts.Name.Name
+						qualified := ob.Pkg().Path() + "." + ts.Name.Name
 						pos := v.Fset.Position(st.Pos()).Line
 						end := v.Fset.Position(st.End()).Line
 						filepath := v.Fset.Position(st.Pos()).Filename
-						var stCode string
+						var code string
 
 						var b []byte
 						buf := bytes.NewBuffer(b)
 						err := format.Node(buf, v.Fset, n)
 						if err != nil {
+							// TODO: Add better error handling
 							panic(err)
 						}
 
-						stCode = buf.String()
+						code = buf.String()
+						node := Node{
+							Name:          ts.Name.Name,
+							QualifiedName: qualified,
+							Pos:           pos,
+							End:           end,
+							File:          filepath,
+							Code:          code,
+						}
 
-						td := TypeDecl{
-							Name:       ts.Name.Name,
-							QName:      stQName,
-							Type:       tsObj.Type().String(),
-							Underlying: tsObj.Type().Underlying().String(),
+						td := TypeDef{
+							Node:       node,
+							Type:       ob.Type().String(),
+							Underlying: ob.Type().Underlying().String(),
 							Kind:       Struct,
-							Pos:        pos,
-							End:        end,
-							Filepath:   filepath,
-							Code:       stCode,
 						}
 
-						v.TypeDecls[stQName] = td
+						v.TypeDecls[qualified] = td
 
-						fields := st.Fields
+						// fields := st.Fields
 
-						for _, f := range fields.List {
-							for _, n := range f.Names {
-								fobj := v.Info.Defs[n]
-								fQName := fobj.Pkg().Path() + "." + fobj.Name()
-								_, ok := fobj.Type().Underlying().(*types.Struct)
-								if ok {
-									// Store only structs are are defined in project
-									if strings.HasPrefix(fobj.Type().String(), "struct") {
-										pos := v.Fset.Position(f.Pos())
-										end := v.Fset.Position(f.End())
-
-										ftd := TypeDecl{
-											Name:       fobj.Name(),
-											QName:      fQName,
-											Type:       fobj.Type().String(),
-											Underlying: fobj.Type().Underlying().String(),
-											Kind:       Struct,
-											Pos:        pos.Line,
-											End:        end.Line,
-											Filepath:   pos.Filename,
-										}
-										v.TypeDecls[fQName] = ftd
-									}
-								}
-								m := Member{
-									Name:        fobj.Name(),
-									QName:       fQName,
-									TypeQName:   fobj.Type().String(),
-									ParentQName: stQName,
-									Pos:         v.Fset.Position(f.Pos()).Line,
-									End:         v.Fset.Position(f.End()).Line,
-									Filepath:    v.Fset.Position(f.Pos()).Filename,
-									Code:        "",
-								}
-								v.Members[fQName] = m
-							}
-						}
+						// for _, f := range fields.List {
+						// 	for _, n := range f.Names {
+						// 		fobj := v.Info.Defs[n]
+						// 		fQName := fobj.Pkg().Path() + "." + fobj.Name()
+						// 		_, ok := fobj.Type().Underlying().(*types.Struct)
+						// 		if ok {
+						// 			// Store only structs are are defined in project
+						// 			if strings.HasPrefix(fobj.Type().String(), "struct") {
+						// 				pos := v.Fset.Position(f.Pos())
+						// 				end := v.Fset.Position(f.End())
+						//
+						// 				ftd := TypeDef{
+						// 					Name:       fobj.Name(),
+						// 					QName:      fQName,
+						// 					Type:       fobj.Type().String(),
+						// 					Underlying: fobj.Type().Underlying().String(),
+						// 					Kind:       Struct,
+						// 					Pos:        pos.Line,
+						// 					End:        end.Line,
+						// 					File:       pos.Filename,
+						// 				}
+						// 				v.TypeDecls[fQName] = ftd
+						// 			}
+						// 		}
+						// 		m := Member{
+						// 			Name:        fobj.Name(),
+						// 			QName:       fQName,
+						// 			TypeQName:   fobj.Type().String(),
+						// 			ParentQName: qualified,
+						// 			Pos:         v.Fset.Position(f.Pos()).Line,
+						// 			End:         v.Fset.Position(f.End()).Line,
+						// 			Filepath:    v.Fset.Position(f.Pos()).Filename,
+						// 			Code:        "",
+						// 		}
+						// 		v.Members[fQName] = m
+						// 	}
+						// }
 					}
 				}
 			}
