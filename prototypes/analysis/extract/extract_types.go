@@ -23,21 +23,67 @@ func (v *StructVisitor) Visit(node ast.Node) ast.Visitor {
 		return nil
 	}
 
-	switch n := node.(type) {
+	switch nd := node.(type) {
 
-	case *ast.File,
-		*ast.FieldList,
-		*ast.Ident:
+	case *ast.File:
 		return v
+
+	case *ast.Field:
+		{
+			for _, fieldName := range nd.Names {
+				fieldObj := v.Info.Defs[fieldName]
+
+				if st, ok := nd.Type.(*ast.StructType); ok {
+
+					stQName := fieldObj.Pkg().Path() + "." + fieldName.Name
+					pos := v.Fset.Position(st.Pos()).Line
+					end := v.Fset.Position(st.End()).Line
+					filepath := v.Fset.Position(st.Pos()).Filename
+
+					// Extract code
+					var stCode string
+					var b []byte
+					buf := bytes.NewBuffer(b)
+					err := format.Node(buf, v.Fset, st)
+					if err != nil {
+						// TODO: Handle errors gracefully
+						panic(err)
+					}
+					stCode = buf.String()
+
+					td := TypeDecl{
+						Name:       fieldName.Name,
+						QName:      stQName,
+						Type:       fieldObj.Type().String(),
+						Underlying: fieldObj.Type().Underlying().String(),
+						Kind:       Struct,
+						Pos:        pos,
+						End:        end,
+						Filepath:   filepath,
+						Code:       stCode,
+					}
+
+					v.TypeDecls[stQName] = td
+
+					fields := st.Fields
+
+					for _, field := range fields.List {
+						// v.handleFieldNode(field, stQName)
+						ast.Walk(v, field)
+					}
+				}
+			}
+			return v
+		}
 
 	case *ast.GenDecl:
 		{
-			for _, s := range n.Specs {
-				if ts, ok := s.(*ast.TypeSpec); ok {
-					tsObj := v.Info.Defs[ts.Name]
+			for _, s := range nd.Specs {
+				if tSpec, ok := s.(*ast.TypeSpec); ok {
+					tspecObj := v.Info.Defs[tSpec.Name]
 
-					if st, ok := ts.Type.(*ast.StructType); ok {
-						stQName := tsObj.Pkg().Path() + "." + ts.Name.Name
+					if st, ok := tSpec.Type.(*ast.StructType); ok {
+						stQName := tspecObj.Pkg().Path() + "." + tSpec.Name.Name
 						pos := v.Fset.Position(st.Pos()).Line
 						end := v.Fset.Position(st.End()).Line
 						filepath := v.Fset.Position(st.Pos()).Filename
@@ -45,18 +91,19 @@ func (v *StructVisitor) Visit(node ast.Node) ast.Visitor {
 
 						var b []byte
 						buf := bytes.NewBuffer(b)
-						err := format.Node(buf, v.Fset, n)
+						err := format.Node(buf, v.Fset, nd)
 						if err != nil {
+							// TODO: Handle errors gracefully
 							panic(err)
 						}
 
 						stCode = buf.String()
 
 						td := TypeDecl{
-							Name:       ts.Name.Name,
+							Name:       tSpec.Name.Name,
 							QName:      stQName,
-							Type:       tsObj.Type().String(),
-							Underlying: tsObj.Type().Underlying().String(),
+							Type:       tspecObj.Type().String(),
+							Underlying: tspecObj.Type().Underlying().String(),
 							Kind:       Struct,
 							Pos:        pos,
 							End:        end,
@@ -67,43 +114,8 @@ func (v *StructVisitor) Visit(node ast.Node) ast.Visitor {
 						v.TypeDecls[stQName] = td
 
 						fields := st.Fields
-
-						for _, f := range fields.List {
-							for _, n := range f.Names {
-								fobj := v.Info.Defs[n]
-								fQName := fobj.Pkg().Path() + "." + fobj.Name()
-								_, ok := fobj.Type().Underlying().(*types.Struct)
-								if ok {
-									// Store only structs are are defined in project
-									if strings.HasPrefix(fobj.Type().String(), "struct") {
-										pos := v.Fset.Position(f.Pos())
-										end := v.Fset.Position(f.End())
-
-										ftd := TypeDecl{
-											Name:       fobj.Name(),
-											QName:      fQName,
-											Type:       fobj.Type().String(),
-											Underlying: fobj.Type().Underlying().String(),
-											Kind:       Struct,
-											Pos:        pos.Line,
-											End:        end.Line,
-											Filepath:   pos.Filename,
-										}
-										v.TypeDecls[fQName] = ftd
-									}
-								}
-								m := Member{
-									Name:        fobj.Name(),
-									QName:       fQName,
-									TypeQName:   fobj.Type().String(),
-									ParentQName: stQName,
-									Pos:         v.Fset.Position(f.Pos()).Line,
-									End:         v.Fset.Position(f.End()).Line,
-									Filepath:    v.Fset.Position(f.Pos()).Filename,
-									Code:        "",
-								}
-								v.Members[fQName] = m
-							}
+						for _, field := range fields.List {
+							v.handleFieldNode(field, stQName)
 						}
 					}
 				}
@@ -113,5 +125,55 @@ func (v *StructVisitor) Visit(node ast.Node) ast.Visitor {
 
 	default:
 		return nil
+	}
+}
+
+func (v *StructVisitor) handleFieldNode(field *ast.Field, parentQName string) {
+	for _, fieldName := range field.Names {
+		fieldObj := v.Info.Defs[fieldName]
+		fieldQName := parentQName + "." + fieldObj.Name()
+		st, ok := field.Type.(*ast.StructType)
+		if ok {
+			if strings.HasPrefix(fieldObj.Type().String(), "struct") {
+				pos := v.Fset.Position(field.Pos())
+				end := v.Fset.Position(field.End())
+
+				var stCode string
+
+				var b []byte
+				buf := bytes.NewBuffer(b)
+				err := format.Node(buf, v.Fset, st)
+				if err != nil {
+					// TODO: Handle errors gracefully
+					panic(err)
+				}
+
+				stCode = buf.String()
+				ftd := TypeDecl{
+					Name:       fieldObj.Name(),
+					QName:      fieldQName,
+					Type:       fieldObj.Type().String(),
+					Underlying: fieldObj.Type().Underlying().String(),
+					Kind:       Struct,
+					Code:       stCode,
+					Pos:        pos.Line,
+					End:        end.Line,
+					Filepath:   pos.Filename,
+				}
+				v.TypeDecls[fieldQName] = ftd
+			}
+			ast.Walk(v, field)
+		}
+		m := Member{
+			Name:        fieldObj.Name(),
+			QName:       fieldQName,
+			TypeQName:   fieldObj.Type().String(),
+			ParentQName: parentQName,
+			Pos:         v.Fset.Position(field.Pos()).Line,
+			End:         v.Fset.Position(field.End()).Line,
+			Filepath:    v.Fset.Position(field.Pos()).Filename,
+			Code:        "",
+		}
+		v.Members[fieldQName] = m
 	}
 }
