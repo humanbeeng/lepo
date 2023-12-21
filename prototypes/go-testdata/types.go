@@ -44,10 +44,9 @@ type MedicalData struct {
 	Bloodtype string
 }
 
-type GenericData struct {
-	MedicalData MedicalData
-	Degree      string
-	College     string
+type EducationData struct {
+	Degree  string
+	College string
 }
 
 type FinancialData struct {
@@ -55,10 +54,5 @@ type FinancialData struct {
 	BankData struct {
 		BankName string
 		IFSC     int
-		Anon     struct {
-			innerAnonStruct struct {
-				innerAnonName string
-			}
-		}
 	}
 }
