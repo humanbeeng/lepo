@@ -6,8 +6,6 @@ import (
 	"go/format"
 	"go/token"
 	"go/types"
-
-	"github.com/k0kubun/pp"
 )
 
 type InterfaceVisitor struct {
@@ -25,9 +23,7 @@ func (v *InterfaceVisitor) Visit(node ast.Node) ast.Visitor {
 	}
 
 	switch n := node.(type) {
-	case *ast.File,
-		*ast.Ident,
-		*ast.FieldList:
+	case *ast.File:
 		return v
 
 	case *ast.GenDecl:
@@ -50,7 +46,6 @@ func (v *InterfaceVisitor) Visit(node ast.Node) ast.Visitor {
 						if err != nil {
 							panic(err)
 						}
-
 						infCode = buf.String()
 
 						td := TypeDef{
@@ -64,9 +59,7 @@ func (v *InterfaceVisitor) Visit(node ast.Node) ast.Visitor {
 							File:       filepath,
 							Code:       infCode,
 						}
-						pp.Println("Interface", td)
 						v.TypeDecls[infQname] = td
-
 					}
 				}
 			}
