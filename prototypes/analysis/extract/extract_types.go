@@ -2,6 +2,7 @@ package extract
 
 import (
 	"bytes"
+	"fmt"
 	"go/ast"
 	"go/format"
 	"go/token"
@@ -73,6 +74,7 @@ func (v *StructVisitor) Visit(node ast.Node) ast.Visitor {
 							// TODO: Revisit on how to handle errors
 							if err != nil {
 								slog.Error("Unable to visit field", err)
+								fmt.Print("")
 							}
 						}
 					}
