@@ -6,15 +6,13 @@ import (
 	"go/format"
 	"go/token"
 	"go/types"
-
-	"github.com/k0kubun/pp"
 )
 
 type InterfaceVisitor struct {
 	ast.Visitor
 	Fset      *token.FileSet
 	Info      *types.Info
-	TypeDecls map[string]TypeDef
+	TypeDecls map[string]TypeDecl
 	Members   map[string]Member
 	Files     map[string][]byte
 }
@@ -25,9 +23,7 @@ func (v *InterfaceVisitor) Visit(node ast.Node) ast.Visitor {
 	}
 
 	switch n := node.(type) {
-	case *ast.File,
-		*ast.Ident,
-		*ast.FieldList:
+	case *ast.File:
 		return v
 
 	case *ast.GenDecl:
@@ -50,10 +46,9 @@ func (v *InterfaceVisitor) Visit(node ast.Node) ast.Visitor {
 						if err != nil {
 							panic(err)
 						}
-
 						infCode = buf.String()
 
-						td := TypeDef{
+						td := TypeDecl{
 							Name:       ts.Name.Name,
 							QName:      infQname,
 							Type:       tsObj.Type().String(),
@@ -61,12 +56,10 @@ func (v *InterfaceVisitor) Visit(node ast.Node) ast.Visitor {
 							Kind:       Interface,
 							Pos:        pos,
 							End:        end,
-							File:       filepath,
+							Filepath:   filepath,
 							Code:       infCode,
 						}
-						pp.Println("Interface", td)
 						v.TypeDecls[infQname] = td
-
 					}
 				}
 			}

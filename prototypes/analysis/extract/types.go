@@ -11,30 +11,19 @@ type Extractor interface {
 }
 
 type GoExtractor struct {
-	TypeDefs map[string]*TypeDef
-	Members  map[string]*Member
+	TypeDecls map[string]*TypeDecl
+	Members   map[string]*Member
 }
 
 type Node struct {
-	Name          string
-	QualifiedName string
-	Code          string
-	Pos           int
-	End           int
-	File          string
-	Package       string
-	Visibility    Visibility
+	Name     string
+	Code     string
+	FilePath string
+	Pos      int
+	End      int
 }
 
 type Kind string
-
-type Visibility string
-
-const (
-	Public  Visibility = "public"
-	Private Visibility = "private"
-	Package Visibility = "package"
-)
 
 const (
 	Interface Kind = "interface"
@@ -42,46 +31,55 @@ const (
 	Alias     Kind = "alias"
 )
 
-type TypeDef struct {
-	Node
+type TypeDecl struct {
+	Name       string
+	QName      string
 	Type       string
 	Underlying string
+	Code       string
 	Kind       Kind
-	Alias      string
-	AliasFor   string
-	Satisfies  map[string]byte // all keys are always be qualified name
-	DependsOn  map[string]byte
-	Signatures map[string]byte
-	Types      map[string]byte
-	Methods    map[string]byte
-	Members    map[string]byte
+	Pos        int
+	End        int
+	Filepath   string
+	// Package    string
 }
+
+type ExtractNodesResult struct{}
 
 type File struct {
 	Language Language
-}
-
-type Member struct {
-	Node
-	Type   string
-	Parent string
 }
 
 type Namespace struct {
 	Node
 }
 
+type Member struct {
+	Name        string
+	QName       string
+	TypeQName   string
+	ParentQName string
+	Code        string
+	Pos         int
+	End         int
+	Filepath    string
+}
+
 type Function struct {
-	Node
-	Parent    string
-	Overrides string
-	Returns   map[string]byte
-	Params    map[string]byte
+	Name        string
+	QName       string
+	ParentQName string
+	Code        string
+	Pos         int
+	End         int
+	Filepath    string
+	// Returns     []TypeDecl
+	// Params      []TypeDecl
 }
 
 func NewGoExtractor() *GoExtractor {
 	return &GoExtractor{
-		TypeDefs: make(map[string]*TypeDef),
-		Members:  make(map[string]*Member),
+		TypeDecls: make(map[string]*TypeDecl),
+		Members:   make(map[string]*Member),
 	}
 }

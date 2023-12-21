@@ -6,7 +6,8 @@ import (
 	"go/token"
 	"strings"
 
-	"github.com/k0kubun/pp"
+	"log/slog"
+
 	"golang.org/x/tools/go/packages"
 )
 
@@ -20,7 +21,7 @@ func (g *GoExtractor) Extract(pkgstr string) error {
 		Mode: packages.NeedTypes | packages.NeedDeps | packages.NeedSyntax |
 			packages.NeedName | packages.NeedTypesInfo | packages.NeedImports,
 		Fset: fset,
-		Dir:  "/Users/apple/projects/lepo/prototypes/analysis",
+		Dir:  "/home/humanbeeng/projects/lepo/prototypes/go-testdata",
 	}
 
 	// TODO: Take directory as input and get extract pkgstr using go mod file
@@ -36,12 +37,13 @@ func (g *GoExtractor) Extract(pkgstr string) error {
 		// If this is your own package, process its structs.
 		// TODO : Move this inside if condition below
 
-		// sv := &StructVisitor{
-		// 	Fset:      fset,
-		// 	Info:      pkg.TypesInfo,
-		// 	TypeDecls: make(map[string]TypeDecl),
-		// 	Members:   make(map[string]Member),
-		// }
+		sv := &StructVisitor{
+			Fset:      fset,
+			Info:      pkg.TypesInfo,
+			TypeDecls: make(map[string]TypeDecl),
+			Members:   make(map[string]Member),
+		}
+
 		// iv := &InterfaceVisitor{
 		// 	Fset:      fset,
 		// 	Info:      pkg.TypesInfo,
@@ -49,84 +51,32 @@ func (g *GoExtractor) Extract(pkgstr string) error {
 		// 	Members:   make(map[string]Member),
 		// }
 
-		mv := &MethodVisitor{
-			Fset:    fset,
-			Info:    pkg.TypesInfo,
-			Methods: make(map[string]Function),
-		}
+		// mv := &MethodVisitor{
+		// 	Fset:    fset,
+		// 	Info:    pkg.TypesInfo,
+		// 	Methods: make(map[string]Function),
+		// }
 
 		if strings.Contains(pkg.PkgPath, pkgstr) {
 			for _, syn := range pkg.Syntax {
-				ast.Walk(mv, syn)
+				ast.Walk(sv, syn)
 			}
 		}
 
-		for _, m := range mv.Methods {
-			pp.Println("Method", m)
+		// for _, m := range sv.TypeDecls {
+		// 	pp.Println("TD", m.Name)
+		// }
+
+		for _, v := range sv.TypeDecls {
+			slog.Info("Struct", "Name", v.Name)
+			fmt.Println("------------")
 		}
 
-		// for _, v := range sv.TypeDecls {
-		// 	pp.Println("Struct:\n", v)
-		// }
-		//
-		// for _, v := range sv.Members {
-		// 	pp.Println("Member:", v)
-		// }
+		for _, v := range sv.Members {
+			slog.Info("Member", "Name", v.Name)
+			fmt.Println("------------")
+		}
 	})
 
 	return nil
 }
-
-// func (g *GoExtractor) ExtractMembers(st *types.Struct, parentQName string, fset *token.FileSet) {
-// 	for i := 0; i < st.NumFields(); i++ {
-// 		sf := st.Field(i)
-// 		fieldName := sf.Name()
-// 		fieldType := sf.Type().String()
-// 		fieldQName := sf.Pkg().Path() + "." + sf.Name()
-// 		if _, ok := g.TypeDecls[fieldQName]; ok {
-// 			fmt.Println("Found already")
-// 			break
-// 		}
-//
-// 		m := &Member{
-// 			Node: Node{
-// 				Code: sf.String(),
-// 				Pos:  fset.Position(sf.Pos()).Line,
-// 				Name: fieldName,
-// 			},
-// 			ParentQName: parentQName,
-// 			QualifiedName:       fieldQName,
-// 			TypeQualifiedName:   fieldType,
-// 		}
-// 		g.Members[fieldQName] = m
-// 	}
-// }
-
-// Dead code
-
-// for _, obj := range pkg.TypesInfo.Defs {
-// 	if obj == nil {
-// 		continue
-// 	}
-// 	switch typ := obj.Type().(type) {
-// 	case *types.Named:
-// 		{
-// 			if st, ok := typ.Underlying().(*types.Struct); ok {
-// 				g.ExtractTypes(st, obj, fset)
-// 				g.ExtractMembers(st, obj.Name(), fset)
-// 			}
-// 			break
-// 		}
-// 		// else if iface, ok := t.Underlying().(*types.Interface); ok {
-// 		// 	// Case 2: interface
-// 		// } else if sig, ok := t.Underlying().(*types.Signature); ok {
-// 		// 	// Case 3: signature
-// 		// }
-//
-// 	case *types.Struct:
-// 		{
-// 			g.ExtractTypes(typ, obj, fset)
-// 			break
-// 		}
-// 	}
-// }
