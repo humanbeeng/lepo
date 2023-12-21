@@ -21,7 +21,7 @@ func (g *GoExtractor) Extract(pkgstr string) error {
 		Mode: packages.NeedTypes | packages.NeedDeps | packages.NeedSyntax |
 			packages.NeedName | packages.NeedTypesInfo | packages.NeedImports,
 		Fset: fset,
-		Dir:  "/home/humanbeeng/projects/lepo/prototypes/go-testdata",
+		Dir:  "/Users/apple/projects/lepo/prototypes/analysis",
 	}
 
 	// TODO: Take directory as input and get extract pkgstr using go mod file

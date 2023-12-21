@@ -6,16 +6,18 @@ import (
 	"go/format"
 	"go/token"
 	"go/types"
+
 	"strings"
 
 	"log/slog"
+
 )
 
 type StructVisitor struct {
 	ast.Visitor
 	Fset      *token.FileSet
 	Info      *types.Info
-	TypeDecls map[string]TypeDecl
+	TypeDecls map[string]TypeDef
 	Members   map[string]Member
 	Files     map[string][]byte
 }
@@ -32,37 +34,47 @@ func (v *StructVisitor) Visit(node ast.Node) ast.Visitor {
 
 	case *ast.GenDecl:
 		{
+
 			for _, s := range nd.Specs {
 				if tSpec, ok := s.(*ast.TypeSpec); ok {
 					tspecObj := v.Info.Defs[tSpec.Name]
 
 					if st, ok := tSpec.Type.(*ast.StructType); ok {
 						stQName := tspecObj.Pkg().Path() + "." + tSpec.Name.Name
+
 						pos := v.Fset.Position(st.Pos()).Line
 						end := v.Fset.Position(st.End()).Line
 						filepath := v.Fset.Position(st.Pos()).Filename
-						var stCode string
+						var code string
 
 						var b []byte
 						buf := bytes.NewBuffer(b)
 						err := format.Node(buf, v.Fset, nd)
 						if err != nil {
+
 							// TODO: Handle errors gracefully
+
 							panic(err)
 						}
 
-						stCode = buf.String()
+						code = buf.String()
+						node := Node{
+							Name:          ts.Name.Name,
+							QualifiedName: qualified,
+							Pos:           pos,
+							End:           end,
+							File:          filepath,
+							Code:          code,
+						}
+
 
 						td := TypeDecl{
 							Name:       tSpec.Name.Name,
 							QName:      stQName,
 							Type:       tspecObj.Type().String(),
 							Underlying: tspecObj.Type().Underlying().String(),
+
 							Kind:       Struct,
-							Pos:        pos,
-							End:        end,
-							Filepath:   filepath,
-							Code:       stCode,
 						}
 
 						v.TypeDecls[stQName] = td
@@ -75,6 +87,7 @@ func (v *StructVisitor) Visit(node ast.Node) ast.Visitor {
 								slog.Error("Unable to visit field", err)
 							}
 						}
+
 					}
 				}
 			}
