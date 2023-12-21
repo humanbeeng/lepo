@@ -24,7 +24,6 @@ func (v *MethodVisitor) Visit(node ast.Node) ast.Visitor {
 	case *ast.File:
 		return v
 
-	// TODO: Add FuncType which is suspected to be in interface
 	case *ast.FuncDecl:
 		{
 			// Check if it's a method declaration with a receiver
@@ -78,65 +77,15 @@ func (v *MethodVisitor) Visit(node ast.Node) ast.Visitor {
 								Code:     methCode,
 							}
 
-							println("Method:", f.QName)
 							v.Methods[qname] = f
 						}
 					}
 				}
-			} else {
-				// Not a method, just a regular function
-				qname := fnObj.Pkg().Path() + "." + fnObj.Name()
-				f := Function{
-					Name:        fnObj.Name(),
-					QName:       qname,
-					ParentQName: "",
-					Pos:         pos,
-					End:         end,
-					Filepath:    filepath,
-					Code:        methCode,
-				}
-
-				v.Methods[qname] = f
-				// println("Method", qname)
 			}
-
-			// ast.Print(v.Fset, n.Body)
-			bv := &BodyVisitor{
-				Fset: v.Fset,
-				Info: v.Info,
-			}
-
-			ast.Walk(bv, n.Body)
-			// for _, stmt := range n.Body.List {
-			// 	if as, ok := stmt.(*ast.AssignStmt); ok {
-			// 		for _, e := range as.Rhs {
-			// 			if ce, ok := e.(*ast.CallExpr); ok {
-			// 				v.handleCallExpr(ce)
-			// 			}
-			// 		}
-			// 	} else if es, ok := stmt.(*ast.ExprStmt); ok {
-			// 		if ce, ok := es.X.(*ast.CallExpr); ok {
-			// 			// v.handleCallExpr(ce)
-			// 		}
-			// 	}
-			// }
 			return v
 		}
 
 	default:
 		return nil
-	}
-}
-
-func (v *MethodVisitor) handleCallExpr(ce *ast.CallExpr) {
-	if id, ok := ce.Fun.(*ast.Ident); ok {
-		ceObj := v.Info.Uses[id]
-		if ceObj != nil {
-			// qname := ceObj.Pkg().Path() + "." + ceObj.Name()
-			println("Calling", ceObj.Name())
-		}
-	} else if se, ok := ce.Fun.(*ast.SelectorExpr); ok {
-		seObj := v.Info.Uses[se.Sel]
-		println("Calling", seObj.Name())
 	}
 }

@@ -4,14 +4,11 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
-	"io"
-	"os"
 	"strings"
 
+	"github.com/k0kubun/pp"
 	"golang.org/x/tools/go/packages"
 )
-
-var stdout io.Writer = os.Stdout
 
 func (g *GoExtractor) Extract(pkgstr string) error {
 	// orchestrate extract
@@ -32,49 +29,6 @@ func (g *GoExtractor) Extract(pkgstr string) error {
 		fmt.Println("Unable to load package")
 		return err
 	}
-	// prog, _ := ssautil.AllPackages(pkgs, ssa.PrintPackages|ssa.PrintFunctions)
-	// prog.Build()
-	// cg := static.CallGraph(prog)
-	// var before, after string
-	// format := "digraph"
-	//
-	// // Pre-canned formats.
-	// switch format {
-	// case "digraph":
-	// 	format = `{{printf "%q %q" .Caller .Callee}}`
-	//
-	// case "graphviz":
-	// 	before = "digraph callgraph {\n"
-	// 	after = "}\n"
-	// 	format = `  {{printf "%q" .Caller}} -> {{printf "%q" .Callee}}`
-	// }
-	//
-	// tmpl, err := template.New("-format").Parse(format)
-	// if err != nil {
-	// 	return fmt.Errorf("invalid -format template: %v", err)
-	// }
-
-	// Allocate these once, outside the traversal.
-	// var buf bytes.Buffer
-	// data := callgraph.Edge{}
-	// if err := callgraph.GraphVisitEdges(cg, func(edge *callgraph.Edge) error {
-	// 	data.Caller = edge.Caller
-	// 	data.Callee = edge.Callee
-	// 	buf.Reset()
-	// 	if err := tmpl.Execute(&buf, &data); err != nil {
-	// 		return err
-	// 	}
-	// 	stdout.Write(buf.Bytes())
-	// 	if len := buf.Len(); len == 0 || buf.Bytes()[len-1] != '\n' {
-	// 		fmt.Fprintln(stdout)
-	// 	}
-	// 	return nil
-	// }); err != nil {
-	// 	return err
-	// }
-	// fmt.Fprint(stdout, after)
-	// Create a call graph
-	// Print the call graph
 
 	fmt.Println("Found", len(pkgs), "packages")
 
@@ -107,9 +61,9 @@ func (g *GoExtractor) Extract(pkgstr string) error {
 			}
 		}
 
-		// for _, m := range mv.Methods {
-		// 	pp.Println("Method", m)
-		// }
+		for _, m := range mv.Methods {
+			pp.Println("Method", m)
+		}
 
 		// for _, v := range sv.TypeDecls {
 		// 	pp.Println("Struct:\n", v)
@@ -175,19 +129,4 @@ func (g *GoExtractor) Extract(pkgstr string) error {
 // 			break
 // 		}
 // 	}
-// }
-
-// mainPackages returns the main packages to analyze.
-// Each resulting package is named "main" and has a main function.
-// func mainPackages(pkgs []*ssa.Package) ([]*ssa.Package, error) {
-// 	var mains []*ssa.Package
-// 	for _, p := range pkgs {
-// 		if p != nil && p.Pkg.Name() == "main" && p.Func("main") != nil {
-// 			mains = append(mains, p)
-// 		}
-// 	}
-// 	if len(mains) == 0 {
-// 		return nil, fmt.Errorf("no main packages")
-// 	}
-// 	return mains, nil
 // }
