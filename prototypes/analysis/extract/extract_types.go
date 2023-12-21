@@ -7,6 +7,8 @@ import (
 	"go/token"
 	"go/types"
 	"strings"
+
+	"log/slog"
 )
 
 type StructVisitor struct {
@@ -27,54 +29,6 @@ func (v *StructVisitor) Visit(node ast.Node) ast.Visitor {
 
 	case *ast.File:
 		return v
-
-	case *ast.Field:
-		{
-			for _, fieldName := range nd.Names {
-				fieldObj := v.Info.Defs[fieldName]
-
-				if st, ok := nd.Type.(*ast.StructType); ok {
-
-					stQName := fieldObj.Pkg().Path() + "." + fieldName.Name
-					pos := v.Fset.Position(st.Pos()).Line
-					end := v.Fset.Position(st.End()).Line
-					filepath := v.Fset.Position(st.Pos()).Filename
-
-					// Extract code
-					var stCode string
-					var b []byte
-					buf := bytes.NewBuffer(b)
-					err := format.Node(buf, v.Fset, st)
-					if err != nil {
-						// TODO: Handle errors gracefully
-						panic(err)
-					}
-					stCode = buf.String()
-
-					td := TypeDecl{
-						Name:       fieldName.Name,
-						QName:      stQName,
-						Type:       fieldObj.Type().String(),
-						Underlying: fieldObj.Type().Underlying().String(),
-						Kind:       Struct,
-						Pos:        pos,
-						End:        end,
-						Filepath:   filepath,
-						Code:       stCode,
-					}
-
-					v.TypeDecls[stQName] = td
-
-					fields := st.Fields
-
-					for _, field := range fields.List {
-						// v.handleFieldNode(field, stQName)
-						ast.Walk(v, field)
-					}
-				}
-			}
-			return v
-		}
 
 	case *ast.GenDecl:
 		{
@@ -115,7 +69,11 @@ func (v *StructVisitor) Visit(node ast.Node) ast.Visitor {
 
 						fields := st.Fields
 						for _, field := range fields.List {
-							v.handleFieldNode(field, stQName)
+							err := v.handleFieldNode(field, stQName)
+							// TODO: Revisit on how to handle errors
+							if err != nil {
+								slog.Error("Unable to visit field", err)
+							}
 						}
 					}
 				}
@@ -128,44 +86,55 @@ func (v *StructVisitor) Visit(node ast.Node) ast.Visitor {
 	}
 }
 
-func (v *StructVisitor) handleFieldNode(field *ast.Field, parentQName string) {
+func (v *StructVisitor) handleFieldNode(field *ast.Field, parentQName string) error {
+	if field == nil {
+		return nil
+	}
+
 	for _, fieldName := range field.Names {
 		fieldObj := v.Info.Defs[fieldName]
 		fieldQName := parentQName + "." + fieldObj.Name()
+
 		st, ok := field.Type.(*ast.StructType)
-		if ok {
-			if strings.HasPrefix(fieldObj.Type().String(), "struct") {
-				pos := v.Fset.Position(field.Pos())
-				end := v.Fset.Position(field.End())
+		if ok && (strings.HasPrefix(fieldObj.Type().String(), "struct")) {
+			pos := v.Fset.Position(field.Pos())
+			end := v.Fset.Position(field.End())
 
-				var stCode string
+			var stCode string
 
-				var b []byte
-				buf := bytes.NewBuffer(b)
-				err := format.Node(buf, v.Fset, st)
-				if err != nil {
-					// TODO: Handle errors gracefully
-					panic(err)
-				}
-
-				stCode = buf.String()
-				ftd := TypeDecl{
-					Name:       fieldObj.Name(),
-					QName:      fieldQName,
-					Type:       fieldObj.Type().String(),
-					Underlying: fieldObj.Type().Underlying().String(),
-					Kind:       Struct,
-					Code:       stCode,
-					Pos:        pos.Line,
-					End:        end.Line,
-					Filepath:   pos.Filename,
-				}
-				v.TypeDecls[fieldQName] = ftd
+			var b []byte
+			buf := bytes.NewBuffer(b)
+			err := format.Node(buf, v.Fset, st)
+			if err != nil {
+				return err
 			}
-			ast.Walk(v, field)
+			stCode = buf.String()
+
+			ftd := TypeDecl{
+				Name:       fieldObj.Name(),
+				QName:      fieldQName,
+				Type:       fieldObj.Type().String(),
+				Underlying: fieldObj.Type().Underlying().String(),
+				Kind:       Struct,
+				Code:       stCode,
+				Pos:        pos.Line,
+				End:        end.Line,
+				Filepath:   pos.Filename,
+			}
+
+			v.TypeDecls[fieldQName] = ftd
+
+			fields := st.Fields
+			for _, stf := range fields.List {
+				err := v.handleFieldNode(stf, fieldQName)
+				if err != nil {
+					return err
+				}
+			}
+
 		}
 		m := Member{
-			Name:        fieldObj.Name(),
+			Name:        fieldName.Name,
 			QName:       fieldQName,
 			TypeQName:   fieldObj.Type().String(),
 			ParentQName: parentQName,
@@ -176,4 +145,5 @@ func (v *StructVisitor) handleFieldNode(field *ast.Field, parentQName string) {
 		}
 		v.Members[fieldQName] = m
 	}
+	return nil
 }

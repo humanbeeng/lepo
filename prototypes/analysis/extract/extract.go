@@ -6,6 +6,8 @@ import (
 	"go/token"
 	"strings"
 
+	"log/slog"
+
 	"golang.org/x/tools/go/packages"
 )
 
@@ -41,6 +43,7 @@ func (g *GoExtractor) Extract(pkgstr string) error {
 			TypeDecls: make(map[string]TypeDecl),
 			Members:   make(map[string]Member),
 		}
+
 		// iv := &InterfaceVisitor{
 		// 	Fset:      fset,
 		// 	Info:      pkg.TypesInfo,
@@ -60,90 +63,20 @@ func (g *GoExtractor) Extract(pkgstr string) error {
 			}
 		}
 
-		// for _, m := range mv.Methods {
-		// 	pp.Println("Method", m)
+		// for _, m := range sv.TypeDecls {
+		// 	pp.Println("TD", m.Name)
 		// }
 
 		for _, v := range sv.TypeDecls {
-			fmt.Println("Struct: ", v.QName)
-			fmt.Println("Code:\n", v.Code)
+			slog.Info("Struct", "Name", v.Name)
 			fmt.Println("------------")
 		}
 
-		// for _, v := range sv.Members {
-		// 	fmt.Printf("%+v \n", v)
-		// 	fmt.Printf("-----\n\n")
-		// }
+		for _, v := range sv.Members {
+			slog.Info("Member", "Name", v.Name)
+			fmt.Println("------------")
+		}
 	})
 
 	return nil
 }
-
-// func (g *GoExtractor) ExtractMembers(st *types.Struct, parentQName string, fset *token.FileSet) {
-// 	for i := 0; i < st.NumFields(); i++ {
-// 		sf := st.Field(i)
-// 		fieldName := sf.Name()
-// 		fieldType := sf.Type().String()
-// 		fieldQName := sf.Pkg().Path() + "." + sf.Name()
-// 		if _, ok := g.TypeDecls[fieldQName]; ok {
-// 			fmt.Println("Found already")
-// 			break
-// 		}
-//
-// 		m := &Member{
-// 			Node: Node{
-// 				Code: sf.String(),
-// 				Pos:  fset.Position(sf.Pos()).Line,
-// 				Name: fieldName,
-// 			},
-// 			ParentQName: parentQName,
-// 			QualifiedName:       fieldQName,
-// 			TypeQualifiedName:   fieldType,
-// 		}
-// 		g.Members[fieldQName] = m
-// 	}
-// }
-
-// Dead code
-
-// for _, obj := range pkg.TypesInfo.Defs {
-// 	if obj == nil {
-// 		continue
-// 	}
-// 	switch typ := obj.Type().(type) {
-// 	case *types.Named:
-// 		{
-// 			if st, ok := typ.Underlying().(*types.Struct); ok {
-// 				g.ExtractTypes(st, obj, fset)
-// 				g.ExtractMembers(st, obj.Name(), fset)
-// 			}
-// 			break
-// 		}
-// 		// else if iface, ok := t.Underlying().(*types.Interface); ok {
-// 		// 	// Case 2: interface
-// 		// } else if sig, ok := t.Underlying().(*types.Signature); ok {
-// 		// 	// Case 3: signature
-// 		// }
-//
-// 	case *types.Struct:
-// 		{
-// 			g.ExtractTypes(typ, obj, fset)
-// 			break
-// 		}
-// 	}
-// }
-
-// mainPackages returns the main packages to analyze.
-// Each resulting package is named "main" and has a main function.
-// func mainPackages(pkgs []*ssa.Package) ([]*ssa.Package, error) {
-// 	var mains []*ssa.Package
-// 	for _, p := range pkgs {
-// 		if p != nil && p.Pkg.Name() == "main" && p.Func("main") != nil {
-// 			mains = append(mains, p)
-// 		}
-// 	}
-// 	if len(mains) == 0 {
-// 		return nil, fmt.Errorf("no main packages")
-// 	}
-// 	return mains, nil
-// }

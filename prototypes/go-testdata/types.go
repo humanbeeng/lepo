@@ -44,9 +44,10 @@ type MedicalData struct {
 	Bloodtype string
 }
 
-type EducationData struct {
-	Degree  string
-	College string
+type GenericData struct {
+	MedicalData MedicalData
+	Degree      string
+	College     string
 }
 
 type FinancialData struct {
