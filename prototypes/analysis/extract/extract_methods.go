@@ -53,13 +53,13 @@ func (v *MethodVisitor) Visit(node ast.Node) ast.Visitor {
 						qname := fnObj.Pkg().Path() + "." + fnObj.Name()
 
 						f := Function{
-							Name:        fnObj.Name(),
-							QName:       qname,
-							ParentQName: stQName,
-							Pos:         pos,
-							End:         end,
-							Filepath:    filepath,
-							Code:        methCode,
+							Name:     fnObj.Name(),
+							QName:    qname,
+							Parent:   stQName,
+							Pos:      pos,
+							End:      end,
+							Filepath: filepath,
+							Code:     methCode,
 						}
 
 						v.Methods[qname] = f
@@ -69,13 +69,13 @@ func (v *MethodVisitor) Visit(node ast.Node) ast.Visitor {
 							qname := fnObj.Pkg().Path() + "." + fnObj.Name()
 
 							f := Function{
-								Name:        fnObj.Name(),
-								QName:       qname,
-								ParentQName: stQName,
-								Pos:         pos,
-								End:         end,
-								Filepath:    filepath,
-								Code:        methCode,
+								Name:     fnObj.Name(),
+								QName:    qname,
+								Parent:   stQName,
+								Pos:      pos,
+								End:      end,
+								Filepath: filepath,
+								Code:     methCode,
 							}
 
 							println("Method:", f.QName)
