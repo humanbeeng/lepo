@@ -54,5 +54,10 @@ type FinancialData struct {
 	BankData struct {
 		BankName string
 		IFSC     int
+		Anon     struct {
+			innerAnonStruct struct {
+				innerAnonName string
+			}
+		}
 	}
 }
