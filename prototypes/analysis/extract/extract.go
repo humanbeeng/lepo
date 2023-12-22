@@ -6,8 +6,6 @@ import (
 	"go/token"
 	"strings"
 
-	"log/slog"
-
 	"golang.org/x/tools/go/packages"
 )
 
@@ -37,12 +35,12 @@ func (g *GoExtractor) Extract(pkgstr string) error {
 		// If this is your own package, process its structs.
 		// TODO : Move this inside if condition below
 
-		sv := &StructVisitor{
-			Fset:      fset,
-			Info:      pkg.TypesInfo,
-			TypeDecls: make(map[string]TypeDecl),
-			Members:   make(map[string]Member),
-		}
+		// sv := &StructVisitor{
+		// 	Fset:      fset,
+		// 	Info:      pkg.TypesInfo,
+		// 	TypeDecls: make(map[string]TypeDecl),
+		// 	Members:   make(map[string]Member),
+		// }
 
 		// iv := &InterfaceVisitor{
 		// 	Fset:      fset,
@@ -51,31 +49,33 @@ func (g *GoExtractor) Extract(pkgstr string) error {
 		// 	Members:   make(map[string]Member),
 		// }
 
-		// mv := &MethodVisitor{
-		// 	Fset:    fset,
-		// 	Info:    pkg.TypesInfo,
-		// 	Methods: make(map[string]Function),
-		// }
+		mv := &MethodVisitor{
+			Fset:    fset,
+			Info:    pkg.TypesInfo,
+			Methods: make(map[string]Function),
+		}
 
 		if strings.Contains(pkg.PkgPath, pkgstr) {
 			for _, syn := range pkg.Syntax {
-				ast.Walk(sv, syn)
+				ast.Walk(mv, syn)
 			}
 		}
 
-		// for _, m := range sv.TypeDecls {
-		// 	pp.Println("TD", m.Name)
+		for _, m := range mv.Methods {
+			fmt.Println("Method:", m.Name)
+			fmt.Println("Of:", m.ParentQName)
+			fmt.Println("------------")
+		}
+
+		// for _, v := range sv.TypeDecls {
+		// 	slog.Info("Struct", "Name", v.Name)
+		// 	fmt.Println("------------")
 		// }
-
-		for _, v := range sv.TypeDecls {
-			slog.Info("Struct", "Name", v.Name)
-			fmt.Println("------------")
-		}
-
-		for _, v := range sv.Members {
-			slog.Info("Member", "Name", v.Name)
-			fmt.Println("------------")
-		}
+		//
+		// for _, v := range sv.Members {
+		// 	slog.Info("Member", "Name", v.Name)
+		// 	fmt.Println("------------")
+		// }
 	})
 
 	return nil
