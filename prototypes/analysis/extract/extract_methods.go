@@ -29,7 +29,6 @@ func (v *MethodVisitor) Visit(node ast.Node) ast.Visitor {
 		{
 			// Add nil check for obj
 			fnObj := v.Info.Defs[n.Name]
-
 			pos := v.Fset.Position(n.Pos()).Line
 			end := v.Fset.Position(n.End()).Line
 			filepath := v.Fset.Position(n.Pos()).Filename
@@ -43,8 +42,8 @@ func (v *MethodVisitor) Visit(node ast.Node) ast.Visitor {
 				// TODO: Better error handling
 				panic(err)
 			}
-
 			mCode = buf.String()
+
 			if n.Recv != nil {
 				for _, field := range n.Recv.List {
 					if id, ok := field.Type.(*ast.Ident); ok {
@@ -62,6 +61,7 @@ func (v *MethodVisitor) Visit(node ast.Node) ast.Visitor {
 							Code:        mCode,
 						}
 
+						v.extractParamsAndReturns(n, &f)
 						v.Methods[qname] = f
 					} else if se, ok := field.Type.(*ast.StarExpr); ok {
 						// Pointer based method
@@ -78,6 +78,7 @@ func (v *MethodVisitor) Visit(node ast.Node) ast.Visitor {
 								Filepath:    filepath,
 								Code:        mCode,
 							}
+							v.extractParamsAndReturns(n, &f)
 							v.Methods[qname] = f
 						}
 					}
@@ -95,6 +96,7 @@ func (v *MethodVisitor) Visit(node ast.Node) ast.Visitor {
 					Code:        mCode,
 				}
 
+				v.extractParamsAndReturns(n, &f)
 				v.Methods[qname] = f
 			}
 
@@ -123,5 +125,28 @@ func (v *MethodVisitor) handleCallExpr(ce *ast.CallExpr) {
 	} else if se, ok := ce.Fun.(*ast.SelectorExpr); ok {
 		seObj := v.Info.Uses[se.Sel]
 		println("Calling", seObj.Name())
+	}
+}
+
+func (v *MethodVisitor) extractParamsAndReturns(n *ast.FuncDecl, f *Function) {
+	// Extract params and return types
+	params := n.Type.Params.List
+
+	for _, p := range params {
+		for _, name := range p.Names {
+			pObj := v.Info.Defs[name]
+			f.ParamQNames = append(f.ParamQNames, pObj.Type().String())
+		}
+	}
+
+	if n.Type.Results != nil {
+		results := n.Type.Results.List
+		for _, r := range results {
+			a, ok := v.Info.Types[r.Type]
+			if !ok {
+				continue
+			}
+			f.ReturnQNames = append(f.ReturnQNames, a.Type.String())
+		}
 	}
 }

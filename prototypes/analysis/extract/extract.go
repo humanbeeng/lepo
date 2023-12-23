@@ -63,8 +63,10 @@ func (g *GoExtractor) Extract(pkgstr string) error {
 
 		for _, m := range mv.Methods {
 			fmt.Println("Method:", m.Name)
-			fmt.Println("Of:", m.ParentQName)
-			fmt.Println("------------")
+			fmt.Println("Parent:", m.ParentQName)
+			fmt.Println("Params", m.ParamQNames)
+			fmt.Println("Returns", m.ReturnQNames)
+			fmt.Printf("------------\n")
 		}
 
 		// for _, v := range sv.TypeDecls {
