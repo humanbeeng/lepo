@@ -27,28 +27,27 @@ func (v *MethodVisitor) Visit(node ast.Node) ast.Visitor {
 	// TODO: Add FuncType which is suspected to be in interface
 	case *ast.FuncDecl:
 		{
-			// Check if it's a method declaration with a receiver
 			// Add nil check for obj
 			fnObj := v.Info.Defs[n.Name]
-
 			pos := v.Fset.Position(n.Pos()).Line
 			end := v.Fset.Position(n.End()).Line
 			filepath := v.Fset.Position(n.Pos()).Filename
 
-			var methCode string
+			var mCode string
 			var b []byte
 
 			buf := bytes.NewBuffer(b)
 			err := format.Node(buf, v.Fset, n)
 			if err != nil {
-				// Remove this
+				// TODO: Better error handling
 				panic(err)
 			}
+			mCode = buf.String()
 
-			methCode = buf.String()
 			if n.Recv != nil {
 				for _, field := range n.Recv.List {
 					if id, ok := field.Type.(*ast.Ident); ok {
+						// Regular method
 						stQName := fnObj.Pkg().Path() + "." + id.Name
 						qname := fnObj.Pkg().Path() + "." + fnObj.Name()
 
@@ -59,11 +58,13 @@ func (v *MethodVisitor) Visit(node ast.Node) ast.Visitor {
 							Pos:         pos,
 							End:         end,
 							Filepath:    filepath,
-							Code:        methCode,
+							Code:        mCode,
 						}
 
+						v.extractParamsAndReturns(n, &f)
 						v.Methods[qname] = f
 					} else if se, ok := field.Type.(*ast.StarExpr); ok {
+						// Pointer based method
 						if id, ok := se.X.(*ast.Ident); ok {
 							stQName := fnObj.Pkg().Path() + "." + id.Name
 							qname := fnObj.Pkg().Path() + "." + fnObj.Name()
@@ -75,16 +76,15 @@ func (v *MethodVisitor) Visit(node ast.Node) ast.Visitor {
 								Pos:         pos,
 								End:         end,
 								Filepath:    filepath,
-								Code:        methCode,
+								Code:        mCode,
 							}
-
-							println("Method:", f.QName)
+							v.extractParamsAndReturns(n, &f)
 							v.Methods[qname] = f
 						}
 					}
 				}
 			} else {
-				// Not a method, just a regular function
+				// Just a regular function
 				qname := fnObj.Pkg().Path() + "." + fnObj.Name()
 				f := Function{
 					Name:        fnObj.Name(),
@@ -93,11 +93,11 @@ func (v *MethodVisitor) Visit(node ast.Node) ast.Visitor {
 					Pos:         pos,
 					End:         end,
 					Filepath:    filepath,
-					Code:        methCode,
+					Code:        mCode,
 				}
 
+				v.extractParamsAndReturns(n, &f)
 				v.Methods[qname] = f
-				// println("Method", qname)
 			}
 
 			// ast.Print(v.Fset, n.Body)
@@ -107,19 +107,6 @@ func (v *MethodVisitor) Visit(node ast.Node) ast.Visitor {
 			}
 
 			ast.Walk(bv, n.Body)
-			// for _, stmt := range n.Body.List {
-			// 	if as, ok := stmt.(*ast.AssignStmt); ok {
-			// 		for _, e := range as.Rhs {
-			// 			if ce, ok := e.(*ast.CallExpr); ok {
-			// 				v.handleCallExpr(ce)
-			// 			}
-			// 		}
-			// 	} else if es, ok := stmt.(*ast.ExprStmt); ok {
-			// 		if ce, ok := es.X.(*ast.CallExpr); ok {
-			// 			// v.handleCallExpr(ce)
-			// 		}
-			// 	}
-			// }
 			return v
 		}
 
@@ -138,5 +125,28 @@ func (v *MethodVisitor) handleCallExpr(ce *ast.CallExpr) {
 	} else if se, ok := ce.Fun.(*ast.SelectorExpr); ok {
 		seObj := v.Info.Uses[se.Sel]
 		println("Calling", seObj.Name())
+	}
+}
+
+func (v *MethodVisitor) extractParamsAndReturns(n *ast.FuncDecl, f *Function) {
+	// Extract params and return types
+	params := n.Type.Params.List
+
+	for _, p := range params {
+		for _, name := range p.Names {
+			pObj := v.Info.Defs[name]
+			f.ParamQNames = append(f.ParamQNames, pObj.Type().String())
+		}
+	}
+
+	if n.Type.Results != nil {
+		results := n.Type.Results.List
+		for _, r := range results {
+			a, ok := v.Info.Types[r.Type]
+			if !ok {
+				continue
+			}
+			f.ReturnQNames = append(f.ReturnQNames, a.Type.String())
+		}
 	}
 }
