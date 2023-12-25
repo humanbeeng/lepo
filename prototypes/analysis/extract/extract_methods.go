@@ -129,9 +129,10 @@ func (v *MethodVisitor) handleCallExpr(ce *ast.CallExpr) {
 }
 
 func (v *MethodVisitor) extractParamsAndReturns(n *ast.FuncDecl, f *Function) {
-	// Extract params and return types
+	if n.Type.Params == nil {
+		return
+	}
 	params := n.Type.Params.List
-
 	for _, p := range params {
 		for _, name := range p.Names {
 			pObj := v.Info.Defs[name]
@@ -139,14 +140,15 @@ func (v *MethodVisitor) extractParamsAndReturns(n *ast.FuncDecl, f *Function) {
 		}
 	}
 
-	if n.Type.Results != nil {
-		results := n.Type.Results.List
-		for _, r := range results {
-			a, ok := v.Info.Types[r.Type]
-			if !ok {
-				continue
-			}
-			f.ReturnQNames = append(f.ReturnQNames, a.Type.String())
+	if n.Type.Results == nil {
+		return
+	}
+	results := n.Type.Results.List
+	for _, r := range results {
+		a, ok := v.Info.Types[r.Type]
+		if !ok {
+			continue
 		}
+		f.ReturnQNames = append(f.ReturnQNames, a.Type.String())
 	}
 }
