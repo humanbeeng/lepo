@@ -12,3 +12,12 @@ TODO for Jan:
 
 - [ ] Prototype graph creation using json or csv
 - [ ] Method calls
+
+### AST
+
+- Anon functions are represented by ast.FuncLit
+- function calls within same packages are not represented by selector expr rather by identifier itself
+
+### Unknowns
+
+- [ ] How to generate callgraph for internal functions (stdlib functions)

@@ -42,9 +42,10 @@ func (v *StructVisitor) Visit(node ast.Node) ast.Visitor {
 						pos := v.Fset.Position(st.Pos()).Line
 						end := v.Fset.Position(st.End()).Line
 						filepath := v.Fset.Position(st.Pos()).Filename
-						var stCode string
 
+						var stCode string
 						var b []byte
+
 						buf := bytes.NewBuffer(b)
 						err := format.Node(buf, v.Fset, nd)
 						if err != nil {

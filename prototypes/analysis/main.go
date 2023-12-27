@@ -6,7 +6,7 @@ import (
 
 func main() {
 	e := extract.NewGoExtractor()
-	err := e.Extract("github.com/humanbeeng/lepo/prototypes/go-testdata")
+	err := e.Extract("github.com/dgraph-io/dgraph")
 	if err != nil {
 		panic(err)
 	}
