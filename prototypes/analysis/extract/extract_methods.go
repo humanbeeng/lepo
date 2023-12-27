@@ -9,9 +9,9 @@ import (
 )
 
 type MethodVisitor struct {
-	Methods map[string]Function
-	Fset    *token.FileSet
-	Info    *types.Info
+	Functions map[string]Function
+	Fset      *token.FileSet
+	Info      *types.Info
 }
 
 func (v *MethodVisitor) Visit(node ast.Node) ast.Visitor {
@@ -32,6 +32,7 @@ func (v *MethodVisitor) Visit(node ast.Node) ast.Visitor {
 			pos := v.Fset.Position(n.Pos()).Line
 			end := v.Fset.Position(n.End()).Line
 			filepath := v.Fset.Position(n.Pos()).Filename
+			var qname string
 
 			var mCode string
 			var b []byte
@@ -49,7 +50,7 @@ func (v *MethodVisitor) Visit(node ast.Node) ast.Visitor {
 					if id, ok := field.Type.(*ast.Ident); ok {
 						// Regular method
 						stQName := fnObj.Pkg().Path() + "." + id.Name
-						qname := fnObj.Pkg().Path() + "." + fnObj.Name()
+						qname = fnObj.Pkg().Path() + "." + fnObj.Name()
 
 						f := Function{
 							Name:        fnObj.Name(),
@@ -62,12 +63,12 @@ func (v *MethodVisitor) Visit(node ast.Node) ast.Visitor {
 						}
 
 						v.extractParamsAndReturns(n, &f)
-						v.Methods[qname] = f
+						v.Functions[qname] = f
 					} else if se, ok := field.Type.(*ast.StarExpr); ok {
 						// Pointer based method
 						if id, ok := se.X.(*ast.Ident); ok {
 							stQName := fnObj.Pkg().Path() + "." + id.Name
-							qname := fnObj.Pkg().Path() + "." + fnObj.Name()
+							qname = fnObj.Pkg().Path() + "." + fnObj.Name()
 
 							f := Function{
 								Name:        fnObj.Name(),
@@ -79,13 +80,13 @@ func (v *MethodVisitor) Visit(node ast.Node) ast.Visitor {
 								Code:        mCode,
 							}
 							v.extractParamsAndReturns(n, &f)
-							v.Methods[qname] = f
+							v.Functions[qname] = f
 						}
 					}
 				}
 			} else {
 				// Just a regular function
-				qname := fnObj.Pkg().Path() + "." + fnObj.Name()
+				qname = fnObj.Pkg().Path() + "." + fnObj.Name()
 				f := Function{
 					Name:        fnObj.Name(),
 					QName:       qname,
@@ -97,34 +98,22 @@ func (v *MethodVisitor) Visit(node ast.Node) ast.Visitor {
 				}
 
 				v.extractParamsAndReturns(n, &f)
-				v.Methods[qname] = f
+				v.Functions[qname] = f
 			}
 
-			// ast.Print(v.Fset, n.Body)
 			bv := &BodyVisitor{
-				Fset: v.Fset,
-				Info: v.Info,
+				CallerQName: qname,
+				Fset:        v.Fset,
+				Info:        v.Info,
 			}
-
-			ast.Walk(bv, n.Body)
+			if n.Body != nil {
+				ast.Walk(bv, n.Body)
+			}
 			return v
 		}
 
 	default:
 		return nil
-	}
-}
-
-func (v *MethodVisitor) handleCallExpr(ce *ast.CallExpr) {
-	if id, ok := ce.Fun.(*ast.Ident); ok {
-		ceObj := v.Info.Uses[id]
-		if ceObj != nil {
-			// qname := ceObj.Pkg().Path() + "." + ceObj.Name()
-			println("Calling", ceObj.Name())
-		}
-	} else if se, ok := ce.Fun.(*ast.SelectorExpr); ok {
-		seObj := v.Info.Uses[se.Sel]
-		println("Calling", seObj.Name())
 	}
 }
 
