@@ -12,7 +12,7 @@ import (
 	"log/slog"
 )
 
-type StructVisitor struct {
+type TypeVisitor struct {
 	ast.Visitor
 	Fset      *token.FileSet
 	Info      *types.Info
@@ -21,7 +21,7 @@ type StructVisitor struct {
 	Files     map[string][]byte
 }
 
-func (v *StructVisitor) Visit(node ast.Node) ast.Visitor {
+func (v *TypeVisitor) Visit(node ast.Node) ast.Visitor {
 	if node == nil {
 		return nil
 	}
@@ -43,22 +43,16 @@ func (v *StructVisitor) Visit(node ast.Node) ast.Visitor {
 						end := v.Fset.Position(st.End()).Line
 						filepath := v.Fset.Position(st.Pos()).Filename
 
-						var stCode string
-						var b []byte
-
-						buf := bytes.NewBuffer(b)
-						err := format.Node(buf, v.Fset, nd)
+						stCode, err := code(&node, v.Fset)
 						if err != nil {
 							// TODO: Handle errors gracefully
 							panic(err)
 						}
 
-						stCode = buf.String()
-
 						td := TypeDecl{
 							Name:       tSpec.Name.Name,
 							QName:      stQName,
-							Type:       tspecObj.Type().String(),
+							TypeQName:  tspecObj.Type().String(),
 							Underlying: tspecObj.Type().Underlying().String(),
 							Kind:       Struct,
 							Pos:        pos,
@@ -78,6 +72,27 @@ func (v *StructVisitor) Visit(node ast.Node) ast.Visitor {
 								fmt.Print("")
 							}
 						}
+					} else if id, ok := tSpec.Type.(*ast.Ident); ok {
+						// Handle type aliases
+
+						qname := tspecObj.Pkg().Path() + "." + tspecObj.Name()
+
+						pos := v.Fset.Position(id.Pos()).Line
+						end := v.Fset.Position(id.End()).Line
+						filepath := v.Fset.Position(id.Pos()).Filename
+						td := TypeDecl{
+							Name:       tspecObj.Name(),
+							QName:      qname,
+							TypeQName:  tspecObj.Type().String(),
+							Underlying: tspecObj.Type().Underlying().String(),
+							// TODO: Extract code
+							Code:     "",
+							Kind:     Alias,
+							Pos:      pos,
+							End:      end,
+							Filepath: filepath,
+						}
+						v.TypeDecls[qname] = td
 					}
 				}
 			}
@@ -89,7 +104,7 @@ func (v *StructVisitor) Visit(node ast.Node) ast.Visitor {
 	}
 }
 
-func (v *StructVisitor) handleFieldNode(field *ast.Field, parentQName string) error {
+func (v *TypeVisitor) handleFieldNode(field *ast.Field, parentQName string) error {
 	if field == nil {
 		return nil
 	}
@@ -116,7 +131,7 @@ func (v *StructVisitor) handleFieldNode(field *ast.Field, parentQName string) er
 			ftd := TypeDecl{
 				Name:       fieldObj.Name(),
 				QName:      fieldQName,
-				Type:       fieldObj.Type().String(),
+				TypeQName:  fieldObj.Type().String(),
 				Underlying: fieldObj.Type().Underlying().String(),
 				Kind:       Struct,
 				Code:       stCode,

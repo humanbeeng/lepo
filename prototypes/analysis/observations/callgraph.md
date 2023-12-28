@@ -21,3 +21,6 @@ TODO for Jan:
 ### Unknowns
 
 - [ ] How to generate callgraph for internal functions (stdlib functions)
+
+Generate TS/JS callgraph
+[Link](https://github.com/cs-au-dk/jelly)

@@ -1,9 +1,7 @@
 package extract
 
 import (
-	"bytes"
 	"go/ast"
-	"go/format"
 	"go/token"
 	"go/types"
 )
@@ -34,16 +32,11 @@ func (v *MethodVisitor) Visit(node ast.Node) ast.Visitor {
 			filepath := v.Fset.Position(n.Pos()).Filename
 			var qname string
 
-			var mCode string
-			var b []byte
-
-			buf := bytes.NewBuffer(b)
-			err := format.Node(buf, v.Fset, n)
+			mCode, err := code(&node, v.Fset)
 			if err != nil {
 				// TODO: Better error handling
 				panic(err)
 			}
-			mCode = buf.String()
 
 			if n.Recv != nil {
 				for _, field := range n.Recv.List {
