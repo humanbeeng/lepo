@@ -31,10 +31,21 @@ const (
 	Alias     Kind = "alias"
 )
 
+type Constant struct {
+	Name       string
+	QName      string
+	TypeQName  string
+	Underlying string
+	Code       string
+	Pos        int
+	End        int
+	Filepath   string
+}
+
 type TypeDecl struct {
 	Name       string
 	QName      string
-	Type       string
+	TypeQName  string
 	Underlying string
 	Code       string
 	Kind       Kind

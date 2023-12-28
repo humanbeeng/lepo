@@ -1,9 +1,7 @@
 package extract
 
 import (
-	"bytes"
 	"go/ast"
-	"go/format"
 	"go/token"
 	"go/types"
 )
@@ -38,20 +36,15 @@ func (v *InterfaceVisitor) Visit(node ast.Node) ast.Visitor {
 						end := v.Fset.Position(inf.End()).Line
 						filepath := v.Fset.Position(inf.Pos()).Filename
 
-						var infCode string
-						var b []byte
-
-						buf := bytes.NewBuffer(b)
-						err := format.Node(buf, v.Fset, n)
+						infCode, err := code(&node, v.Fset)
 						if err != nil {
 							panic(err)
 						}
-						infCode = buf.String()
 
 						td := TypeDecl{
 							Name:       ts.Name.Name,
 							QName:      infQname,
-							Type:       tsObj.Type().String(),
+							TypeQName:  tsObj.Type().String(),
 							Underlying: tsObj.Type().Underlying().String(),
 							Kind:       Interface,
 							Pos:        pos,
