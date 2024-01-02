@@ -2,12 +2,11 @@ package extract
 
 import (
 	"bytes"
-	"go/ast"
 	"go/format"
 	"go/token"
 )
 
-func code(node *ast.Node, fset *token.FileSet) (string, error) {
+func code(node any, fset *token.FileSet) (string, error) {
 	var codeStr string
 	var b []byte
 	buf := bytes.NewBuffer(b)
