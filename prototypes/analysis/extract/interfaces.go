@@ -36,7 +36,7 @@ func (v *InterfaceVisitor) Visit(node ast.Node) ast.Visitor {
 						end := v.Fset.Position(inf.End()).Line
 						filepath := v.Fset.Position(inf.Pos()).Filename
 
-						infCode, err := code(&node, v.Fset)
+						infCode, err := code(n, v.Fset)
 						if err != nil {
 							panic(err)
 						}

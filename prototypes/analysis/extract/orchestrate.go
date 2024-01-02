@@ -1,6 +1,7 @@
 package extract
 
 import (
+	"fmt"
 	"go/ast"
 	"go/token"
 	"log/slog"
@@ -38,67 +39,70 @@ func (g *GoExtractor) Extract(pkgstr string) error {
 	// fxs := 0
 
 	packages.Visit(pkgs, nil, func(pkg *packages.Package) {
-		// If this is your own package, process its structs.
 		// TODO : Move this inside if condition below
-
-		if strings.Contains(pkg.PkgPath, pkgstr) {
-			slog.Info("Analysing", "package", pkg.PkgPath)
-			// tv := &TypeVisitor{
-			// 	Fset:      fset,
-			// 	Info:      pkg.TypesInfo,
-			// 	TypeDecls: make(map[string]TypeDecl),
-			// 	Members:   make(map[string]Member),
-			// }
-			//
-			// iv := &InterfaceVisitor{
-			// 	Fset:      fset,
-			// 	Info:      pkg.TypesInfo,
-			// 	TypeDecls: make(map[string]TypeDecl),
-			// 	Members:   make(map[string]Member),
-			// }
-
-			// cv := &ConstVisitor{
-			// 	Fset:      fset,
-			// 	Info:      pkg.TypesInfo,
-			// 	Constants: make(map[string]Constant),
-			// }
-
-			mv := &FileVisitor{
-				Fset: fset,
-				Info: pkg.TypesInfo,
-			}
-
-			// mv := &MethodVisitor{
-			// 	Fset:      fset,
-			// 	Info:      pkg.TypesInfo,
-			// 	Functions: make(map[string]Function),
-			// }
-			// var wg *sync.WaitGroup
-
-			// For each file in package
-			for _, syn := range pkg.Syntax {
-				ast.Walk(mv, syn)
-				// ast.Walk(sv, syn)
-				// ast.Walk(iv, syn)
-			}
-			// fmt.Println("Found", len(sv.TypeDecls), "types")
-
-			// for _, c := range tv.TypeDecls {
-			// 	fmt.Println(c.Name)
-			// 	fmt.Println(c.QName)
-			// 	fmt.Println(c.TypeQName)
-			// 	fmt.Println(c.Underlying)
-			// 	fmt.Println(c.Kind)
-			// 	fmt.Println("-------")
-			// }
-
-			// for _, t := range sv.TypeDecls {
-			// 	fmt.Println(t)
-			// }
-			// tds += len(sv.TypeDecls)
-			// ivs += len(iv.TypeDecls)
-			// fxs += len(mv.Functions)
+		// If this is your own package, process its structs.
+		if !strings.Contains(pkg.PkgPath, pkgstr) {
+			return
 		}
+		slog.Info("Analysing", "package", pkg.PkgPath)
+		// tv := &TypeVisitor{
+		// 	Fset:      fset,
+		// 	Info:      pkg.TypesInfo,
+		// 	TypeDecls: make(map[string]TypeDecl),
+		// 	Members:   make(map[string]Member),
+		// }
+		//
+		iv := &InterfaceVisitor{
+			Fset:      fset,
+			Info:      pkg.TypesInfo,
+			TypeDecls: make(map[string]TypeDecl),
+			Members:   make(map[string]Member),
+		}
+
+		// cv := &ConstVisitor{
+		// 	Fset:      fset,
+		// 	Info:      pkg.TypesInfo,
+		// 	Constants: make(map[string]Constant),
+		// }
+
+		// fv := &FileVisitor{
+		// 	Imports: make([]string, 0),
+		// 	Package: pkg.PkgPath,
+		// 	Fset:    fset,
+		// 	Info:    pkg.TypesInfo,
+		// }
+
+		mv := &MethodVisitor{
+			Fset:      fset,
+			Info:      pkg.TypesInfo,
+			Functions: make(map[string]Function),
+		}
+		// var wg *sync.WaitGroup
+
+		// For each file in package
+		for _, syn := range pkg.Syntax {
+			ast.Walk(mv, syn)
+			// ast.Walk(sv, syn)
+			ast.Walk(iv, syn)
+		}
+		// fmt.Println("Found", len(sv.TypeDecls), "types")
+
+		// for _, c := range tv.TypeDecls {
+		// 	fmt.Println(c.Name)
+		// 	fmt.Println(c.QName)
+		// 	fmt.Println(c.TypeQName)
+		// 	fmt.Println(c.Underlying)
+		// 	fmt.Println(c.Kind)
+		// 	fmt.Println("-------")
+		// }
+
+		for _, m := range mv.Functions {
+			fmt.Println("Function Name:", m.QName)
+		}
+
+		// tds += len(sv.TypeDecls)
+		// ivs += len(iv.TypeDecls)
+		// fxs += len(mv.Functions)
 	})
 
 	// slog.Info("TypeDecls", "count", tds)

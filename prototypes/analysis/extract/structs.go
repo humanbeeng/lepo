@@ -17,7 +17,6 @@ type TypeVisitor struct {
 	Info      *types.Info
 	TypeDecls map[string]TypeDecl
 	Members   map[string]Member
-	Files     map[string][]byte
 }
 
 func (v *TypeVisitor) Visit(node ast.Node) ast.Visitor {
@@ -42,7 +41,7 @@ func (v *TypeVisitor) Visit(node ast.Node) ast.Visitor {
 						end := v.Fset.Position(st.End()).Line
 						filepath := v.Fset.Position(st.Pos()).Filename
 
-						stCode, err := code(&node, v.Fset)
+						stCode, err := code(nd, v.Fset)
 						if err != nil {
 							// TODO: Handle errors gracefully
 							panic(err)

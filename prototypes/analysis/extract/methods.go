@@ -32,7 +32,7 @@ func (v *MethodVisitor) Visit(node ast.Node) ast.Visitor {
 			filepath := v.Fset.Position(n.Pos()).Filename
 			var qname string
 
-			mCode, err := code(&node, v.Fset)
+			mCode, err := code(n, v.Fset)
 			if err != nil {
 				// TODO: Better error handling
 				panic(err)

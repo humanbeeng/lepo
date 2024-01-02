@@ -58,6 +58,9 @@ type TypeDecl struct {
 type ExtractNodesResult struct{}
 
 type File struct {
+	Filename string
+	Package  string
+	Imports  []string
 	Language Language
 }
 
