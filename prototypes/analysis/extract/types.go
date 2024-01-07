@@ -23,12 +23,12 @@ type Node struct {
 	End      int
 }
 
-type Kind string
+type Kind byte
 
 const (
-	Interface Kind = "interface"
-	Struct    Kind = "struct"
-	Alias     Kind = "alias"
+	Interface Kind = iota
+	Struct
+	Alias
 )
 
 type Constant struct {
@@ -37,6 +37,7 @@ type Constant struct {
 	TypeQName  string
 	Underlying string
 	Code       string
+	Doc        Doc
 	Pos        int
 	End        int
 	Filepath   string
@@ -48,6 +49,7 @@ type TypeDecl struct {
 	TypeQName  string
 	Underlying string
 	Code       string
+	Doc        Doc
 	Kind       Kind
 	Pos        int
 	End        int
@@ -74,6 +76,7 @@ type Member struct {
 	TypeQName   string
 	ParentQName string
 	Code        string
+	Doc         Doc
 	Pos         int
 	End         int
 	Filepath    string
@@ -83,12 +86,33 @@ type Function struct {
 	Name         string
 	QName        string
 	ParentQName  string
+	Doc          Doc
 	Code         string
 	Pos          int
 	End          int
 	Filepath     string
 	ReturnQNames []string
 	ParamQNames  []string
+}
+
+type DocType byte
+
+const (
+	SingleLine DocType = iota
+	MultiLine
+	Block
+	Inline
+)
+
+type Import struct {
+	Path string
+	Doc  Doc
+}
+
+type Doc struct {
+	Comment string
+	OfQName string
+	Type    DocType
 }
 
 func NewGoExtractor() *GoExtractor {

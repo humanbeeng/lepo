@@ -2,7 +2,6 @@ package extract
 
 import (
 	"bytes"
-	"fmt"
 	"go/ast"
 	"go/format"
 	"go/token"
@@ -26,9 +25,6 @@ func (v *TypeVisitor) Visit(node ast.Node) ast.Visitor {
 
 	switch nd := node.(type) {
 
-	case *ast.File:
-		return v
-
 	case *ast.GenDecl:
 		{
 			for _, s := range nd.Specs {
@@ -41,7 +37,8 @@ func (v *TypeVisitor) Visit(node ast.Node) ast.Visitor {
 						end := v.Fset.Position(st.End()).Line
 						filepath := v.Fset.Position(st.Pos()).Filename
 
-						stCode, err := code(nd, v.Fset)
+						ast.Print(v.Fset, nd)
+						stCode, err := extractCode(nd, v.Fset)
 						if err != nil {
 							// TODO: Handle errors gracefully
 							panic(err)
@@ -57,6 +54,10 @@ func (v *TypeVisitor) Visit(node ast.Node) ast.Visitor {
 							End:        end,
 							Filepath:   filepath,
 							Code:       stCode,
+							Doc: Doc{
+								Comment: nd.Doc.Text(),
+								OfQName: stQName,
+							},
 						}
 
 						v.TypeDecls[stQName] = td
@@ -67,7 +68,6 @@ func (v *TypeVisitor) Visit(node ast.Node) ast.Visitor {
 							// TODO: Revisit on how to handle errors
 							if err != nil {
 								slog.Error("Unable to visit field", err)
-								fmt.Print("")
 							}
 						}
 					} else if id, ok := tSpec.Type.(*ast.Ident); ok {
@@ -78,6 +78,11 @@ func (v *TypeVisitor) Visit(node ast.Node) ast.Visitor {
 						pos := v.Fset.Position(id.Pos()).Line
 						end := v.Fset.Position(id.End()).Line
 						filepath := v.Fset.Position(id.Pos()).Filename
+
+						doc := Doc{
+							Comment: nd.Doc.Text(),
+							OfQName: qname,
+						}
 						td := TypeDecl{
 							Name:       tspecObj.Name(),
 							QName:      qname,
@@ -85,6 +90,7 @@ func (v *TypeVisitor) Visit(node ast.Node) ast.Visitor {
 							Underlying: tspecObj.Type().Underlying().String(),
 							// TODO: Extract code
 							Code:     "",
+							Doc:      doc,
 							Kind:     Alias,
 							Pos:      pos,
 							End:      end,
@@ -98,7 +104,7 @@ func (v *TypeVisitor) Visit(node ast.Node) ast.Visitor {
 		}
 
 	default:
-		return nil
+		return v
 	}
 }
 
@@ -111,6 +117,11 @@ func (v *TypeVisitor) handleFieldNode(field *ast.Field, parentQName string) erro
 		fieldObj := v.Info.Defs[fieldName]
 		fieldQName := parentQName + "." + fieldObj.Name()
 
+		d := Doc{
+			Comment: field.Doc.Text() + field.Comment.Text(),
+			OfQName: fieldQName,
+			// TODO: Add doc type
+		}
 		st, ok := field.Type.(*ast.StructType)
 		if ok && (strings.HasPrefix(fieldObj.Type().String(), "struct")) {
 			pos := v.Fset.Position(field.Pos())
@@ -134,6 +145,7 @@ func (v *TypeVisitor) handleFieldNode(field *ast.Field, parentQName string) erro
 				Kind:       Struct,
 				Code:       stCode,
 				Pos:        pos.Line,
+				Doc:        d,
 				End:        end.Line,
 				Filepath:   pos.Filename,
 			}
@@ -158,6 +170,7 @@ func (v *TypeVisitor) handleFieldNode(field *ast.Field, parentQName string) erro
 			End:         v.Fset.Position(field.End()).Line,
 			Filepath:    v.Fset.Position(field.Pos()).Filename,
 			Code:        "",
+			Doc:         d,
 		}
 		v.Members[fieldQName] = m
 	}

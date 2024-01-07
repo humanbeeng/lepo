@@ -18,7 +18,6 @@ func (v *ConstVisitor) Visit(node ast.Node) ast.Visitor {
 		return nil
 	}
 
-	ast.Print(v.Fset, node)
 	switch nd := node.(type) {
 	case *ast.File:
 		{
@@ -31,6 +30,7 @@ func (v *ConstVisitor) Visit(node ast.Node) ast.Visitor {
 				if !ok {
 					continue
 				}
+				ast.Print(v.Fset, nd)
 
 				for _, name := range vs.Names {
 					vsObj := v.Info.Defs[name]
@@ -48,6 +48,7 @@ func (v *ConstVisitor) Visit(node ast.Node) ast.Visitor {
 						Underlying: vsObj.Type().Underlying().String(),
 						// TODO: Get code
 						Code:     "",
+						Doc:      Doc{Comment: vs.Doc.Text() + vs.Comment.Text(), OfQName: qname},
 						Pos:      pos,
 						End:      end,
 						Filepath: filepath,
