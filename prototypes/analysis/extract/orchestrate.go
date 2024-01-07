@@ -23,7 +23,7 @@ func (g *GoExtractor) Extract(pkgstr string) error {
 		Mode: packages.NeedTypes | packages.NeedDeps | packages.NeedSyntax |
 			packages.NeedName | packages.NeedTypesInfo | packages.NeedImports,
 		Fset: fset,
-		Dir:  "/Users/apple/workspace/go/lepo/prototypes/go-testdata",
+		Dir:  "/Users/apple/workspace/go/lepo/prototypes/go-testdata/current",
 	}
 
 	// TODO: Take directory as input and get extract pkgstr using go mod file
@@ -45,19 +45,19 @@ func (g *GoExtractor) Extract(pkgstr string) error {
 			return
 		}
 		slog.Info("Analysing", "package", pkg.PkgPath)
-		// tv := &TypeVisitor{
-		// 	Fset:      fset,
-		// 	Info:      pkg.TypesInfo,
-		// 	TypeDecls: make(map[string]TypeDecl),
-		// 	Members:   make(map[string]Member),
-		// }
-		//
-		iv := &InterfaceVisitor{
+		tv := &TypeVisitor{
 			Fset:      fset,
 			Info:      pkg.TypesInfo,
 			TypeDecls: make(map[string]TypeDecl),
 			Members:   make(map[string]Member),
 		}
+
+		// iv := &InterfaceVisitor{
+		// 	Fset:      fset,
+		// 	Info:      pkg.TypesInfo,
+		// 	TypeDecls: make(map[string]TypeDecl),
+		// 	Members:   make(map[string]Member),
+		// }
 
 		// cv := &ConstVisitor{
 		// 	Fset:      fset,
@@ -66,38 +66,41 @@ func (g *GoExtractor) Extract(pkgstr string) error {
 		// }
 
 		// fv := &FileVisitor{
-		// 	Imports: make([]string, 0),
+		// 	Imports: make([]Import, 0),
 		// 	Package: pkg.PkgPath,
 		// 	Fset:    fset,
 		// 	Info:    pkg.TypesInfo,
 		// }
 
-		mv := &MethodVisitor{
-			Fset:      fset,
-			Info:      pkg.TypesInfo,
-			Functions: make(map[string]Function),
-		}
+		// fv := &FunctionVisitor{
+		// 	Fset:      fset,
+		// 	Info:      pkg.TypesInfo,
+		// 	Functions: make(map[string]Function),
+		// }
 		// var wg *sync.WaitGroup
 
 		// For each file in package
 		for _, syn := range pkg.Syntax {
-			ast.Walk(mv, syn)
+			ast.Walk(tv, syn)
 			// ast.Walk(sv, syn)
-			ast.Walk(iv, syn)
 		}
 		// fmt.Println("Found", len(sv.TypeDecls), "types")
 
-		// for _, c := range tv.TypeDecls {
-		// 	fmt.Println(c.Name)
-		// 	fmt.Println(c.QName)
-		// 	fmt.Println(c.TypeQName)
-		// 	fmt.Println(c.Underlying)
-		// 	fmt.Println(c.Kind)
+		// for _, c := range iv.TypeDecls {
+		// 	fmt.Println("Name", c.Name)
+		// 	fmt.Println("Of", c.Doc.OfQName)
+		// 	fmt.Println("Comment", c.Doc.Comment)
 		// 	fmt.Println("-------")
 		// }
 
-		for _, m := range mv.Functions {
-			fmt.Println("Function Name:", m.QName)
+		// for _, m := range tv.Members {
+		// 	fmt.Println("Member:", m.Name)
+		// 	fmt.Println("Comment:", m.Doc.Comment)
+		// }
+
+		for _, m := range tv.Members {
+			fmt.Println("Name:", m.QName)
+			fmt.Println("Comments:", m.Doc.Comment)
 		}
 
 		// tds += len(sv.TypeDecls)

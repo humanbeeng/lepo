@@ -31,13 +31,13 @@ func (v *InterfaceVisitor) Visit(node ast.Node) ast.Visitor {
 					tsObj := v.Info.Defs[ts.Name]
 					if inf, ok := ts.Type.(*ast.InterfaceType); ok {
 						infQname := tsObj.Pkg().Path() + "." + tsObj.Name()
-
 						pos := v.Fset.Position(inf.Pos()).Line
 						end := v.Fset.Position(inf.End()).Line
 						filepath := v.Fset.Position(inf.Pos()).Filename
 
-						infCode, err := code(n, v.Fset)
+						infCode, err := extractCode(n, v.Fset)
 						if err != nil {
+							// TODO -- Better error handling
 							panic(err)
 						}
 
@@ -47,10 +47,15 @@ func (v *InterfaceVisitor) Visit(node ast.Node) ast.Visitor {
 							TypeQName:  tsObj.Type().String(),
 							Underlying: tsObj.Type().Underlying().String(),
 							Kind:       Interface,
-							Pos:        pos,
-							End:        end,
-							Filepath:   filepath,
-							Code:       infCode,
+							Doc: Doc{
+								Comment: ts.Doc.Text(),
+								OfQName: infQname,
+								// TODO: Add comment type
+							},
+							Pos:      pos,
+							End:      end,
+							Filepath: filepath,
+							Code:     infCode,
 						}
 						v.TypeDecls[infQname] = td
 					}

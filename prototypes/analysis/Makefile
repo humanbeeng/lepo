@@ -1,3 +1,3 @@
 run:
-	go build -o bin/analysis; bin/analysis
+	go build -o bin/analysis && bin/analysis
 

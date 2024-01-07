@@ -6,7 +6,7 @@ import (
 	"go/token"
 )
 
-func code(node any, fset *token.FileSet) (string, error) {
+func extractCode(node any, fset *token.FileSet) (string, error) {
 	var codeStr string
 	var b []byte
 	buf := bytes.NewBuffer(b)
