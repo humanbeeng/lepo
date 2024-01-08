@@ -8,7 +8,7 @@ import (
 
 // Comment above struct decl
 type Person struct {
-	Name      string // Inline comment
+	Name      string `json:"name"` // Inline comment
 	Age       int    `json:"age"`
 	TypesInfo types.Info
 	Router    fiber.Route
