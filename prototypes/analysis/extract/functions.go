@@ -109,6 +109,10 @@ func (v *FunctionVisitor) Visit(node ast.Node) ast.Visitor {
 			if n.Body != nil {
 				ast.Walk(bv, n.Body)
 			}
+			f := v.Functions[qname]
+			f.Calls = bv.Calls
+			v.Functions[qname] = f
+
 			return v
 		}
 

@@ -30,7 +30,6 @@ func (v *ConstVisitor) Visit(node ast.Node) ast.Visitor {
 				if !ok {
 					continue
 				}
-				ast.Print(v.Fset, nd)
 
 				for _, name := range vs.Names {
 					vsObj := v.Info.Defs[name]

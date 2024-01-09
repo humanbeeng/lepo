@@ -1,9 +1,7 @@
 package extract
 
 import (
-	"bytes"
 	"go/ast"
-	"go/format"
 	"go/token"
 	"go/types"
 	"log/slog"
@@ -37,7 +35,6 @@ func (v *TypeVisitor) Visit(node ast.Node) ast.Visitor {
 						end := v.Fset.Position(st.End()).Line
 						filepath := v.Fset.Position(st.Pos()).Filename
 
-						ast.Print(v.Fset, nd)
 						stCode, err := extractCode(nd, v.Fset)
 						if err != nil {
 							// TODO: Handle errors gracefully
@@ -122,20 +119,20 @@ func (v *TypeVisitor) handleFieldNode(field *ast.Field, parentQName string) erro
 			OfQName: fieldQName,
 			// TODO: Add doc type
 		}
+
+		if field.Tag != nil {
+			d.Comment = d.Comment + field.Tag.Value
+		}
 		st, ok := field.Type.(*ast.StructType)
 		if ok && (strings.HasPrefix(fieldObj.Type().String(), "struct")) {
 			pos := v.Fset.Position(field.Pos())
 			end := v.Fset.Position(field.End())
 
 			var stCode string
-
-			var b []byte
-			buf := bytes.NewBuffer(b)
-			err := format.Node(buf, v.Fset, st)
+			stCode, err := extractCode(st, v.Fset)
 			if err != nil {
 				return err
 			}
-			stCode = buf.String()
 
 			ftd := TypeDecl{
 				Name:       fieldObj.Name(),
