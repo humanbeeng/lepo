@@ -9,6 +9,7 @@ import (
 type BodyVisitor struct {
 	ast.Visitor
 	CallerQName string
+	Calls       []string
 	Fset        *token.FileSet
 	Info        *types.Info
 }
@@ -30,17 +31,17 @@ func (v *BodyVisitor) Visit(node ast.Node) ast.Visitor {
 }
 
 func (v *BodyVisitor) handleCallExpr(ce *ast.CallExpr) {
-	// if id, ok := ce.Fun.(*ast.Ident); ok {
-	// 	ceObj := v.Info.Uses[id]
-	// 	if ceObj != nil {
-	// fmt.Println("Calling", ceObj.Pkg().Path()+"."+ceObj.Name())
-	// fmt.Println("Caller", v.CallerQName)
-	// fmt.Printf("-----\n\n")
-	// 	}
-	// } else if se, ok := ce.Fun.(*ast.SelectorExpr); ok {
-	// seObj := v.Info.Uses[se.Sel]
-	// fmt.Println("Calling", se.X.(*ast.Ident).Name+"."+seObj.Name())
-	// fmt.Println("Caller", v.CallerQName)
-	// fmt.Printf("-----\n\n")
-	// }
+	if id, ok := ce.Fun.(*ast.Ident); ok {
+		ceObj := v.Info.Uses[id]
+		if ceObj != nil {
+			callee := ceObj.Pkg().Path() + "." + ceObj.Name()
+			v.Calls = append(v.Calls, callee)
+		}
+	} else if se, ok := ce.Fun.(*ast.SelectorExpr); ok {
+		seObj := v.Info.Uses[se.Sel]
+		if seObj != nil {
+			callee := seObj.Pkg().Path() + "." + seObj.Name()
+			v.Calls = append(v.Calls, callee)
+		}
+	}
 }

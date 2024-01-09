@@ -27,27 +27,27 @@ func (v *FileVisitor) Visit(node ast.Node) ast.Visitor {
 				if !ok {
 					continue
 				}
-				var imports []Import
 
 				for _, s := range gd.Specs {
 					is, ok := s.(*ast.ImportSpec)
 					if !ok {
 						continue
 					}
-
-					if !ok {
-						return v
-					}
-					imports = append(imports, Import{
+					i := Import{
 						Path: is.Path.Value,
 						Doc: Doc{
-							Comment: is.Doc.Text(),
+							Comment: is.Doc.Text() + is.Comment.Text(),
 							OfQName: is.Path.Value,
 						},
-					})
+					}
+
+					if is.Name != nil {
+						i.Name = is.Name.Name
+					}
+
+					v.Imports = append(v.Imports, i)
 				}
 
-				v.Imports = imports
 			}
 			return v
 		}
