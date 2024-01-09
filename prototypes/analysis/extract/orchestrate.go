@@ -45,12 +45,12 @@ func (g *GoExtractor) Extract(pkgstr string) error {
 			return
 		}
 		slog.Info("Analysing", "package", pkg.PkgPath)
-		tv := &TypeVisitor{
-			Fset:      fset,
-			Info:      pkg.TypesInfo,
-			TypeDecls: make(map[string]TypeDecl),
-			Members:   make(map[string]Member),
-		}
+		// tv := &TypeVisitor{
+		// 	Fset:      fset,
+		// 	Info:      pkg.TypesInfo,
+		// 	TypeDecls: make(map[string]TypeDecl),
+		// 	Members:   make(map[string]Member),
+		// }
 
 		// iv := &InterfaceVisitor{
 		// 	Fset:      fset,
@@ -65,12 +65,12 @@ func (g *GoExtractor) Extract(pkgstr string) error {
 		// 	Constants: make(map[string]Constant),
 		// }
 
-		// fv := &FileVisitor{
-		// 	Imports: make([]Import, 0),
-		// 	Package: pkg.PkgPath,
-		// 	Fset:    fset,
-		// 	Info:    pkg.TypesInfo,
-		// }
+		fv := &FileVisitor{
+			Imports: make([]Import, 0),
+			Package: pkg.PkgPath,
+			Fset:    fset,
+			Info:    pkg.TypesInfo,
+		}
 
 		// fv := &FunctionVisitor{
 		// 	Fset:      fset,
@@ -81,7 +81,7 @@ func (g *GoExtractor) Extract(pkgstr string) error {
 
 		// For each file in package
 		for _, syn := range pkg.Syntax {
-			ast.Walk(tv, syn)
+			ast.Walk(fv, syn)
 			// ast.Walk(sv, syn)
 		}
 		// fmt.Println("Found", len(sv.TypeDecls), "types")
@@ -97,10 +97,8 @@ func (g *GoExtractor) Extract(pkgstr string) error {
 		// 	fmt.Println("Member:", m.Name)
 		// 	fmt.Println("Comment:", m.Doc.Comment)
 		// }
-
-		for _, m := range tv.Members {
-			fmt.Println("Name:", m.QName)
-			fmt.Println("Comments:", m.Doc.Comment)
+		for _, m := range fv.Imports {
+			fmt.Printf("%+v\n", m)
 		}
 
 		// tds += len(sv.TypeDecls)
