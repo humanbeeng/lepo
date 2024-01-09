@@ -86,6 +86,7 @@ type Function struct {
 	Name         string
 	QName        string
 	ParentQName  string
+	Calls        []string
 	Doc          Doc
 	Code         string
 	Pos          int
@@ -105,6 +106,7 @@ const (
 )
 
 type Import struct {
+	Name string
 	Path string
 	Doc  Doc
 }
