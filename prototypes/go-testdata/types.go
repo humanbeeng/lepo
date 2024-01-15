@@ -1,4 +1,4 @@
-package current
+package main
 
 import (
 	"go/types"

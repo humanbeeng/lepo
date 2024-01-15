@@ -10,10 +10,11 @@ import (
 
 type TypeVisitor struct {
 	ast.Visitor
-	Fset      *token.FileSet
-	Info      *types.Info
-	TypeDecls map[string]TypeDecl
-	Members   map[string]Member
+	Fset         *token.FileSet
+	Info         *types.Info
+	TypeDecls    map[string]TypeDecl
+	Implementors map[string]string
+	Members      map[string]Member
 }
 
 func (v *TypeVisitor) Visit(node ast.Node) ast.Visitor {
@@ -40,17 +41,19 @@ func (v *TypeVisitor) Visit(node ast.Node) ast.Visitor {
 							// TODO: Handle errors gracefully
 							panic(err)
 						}
+						impl := v.Implementors[stQName]
 
 						td := TypeDecl{
-							Name:       tSpec.Name.Name,
-							QName:      stQName,
-							TypeQName:  tspecObj.Type().String(),
-							Underlying: tspecObj.Type().Underlying().String(),
-							Kind:       Struct,
-							Pos:        pos,
-							End:        end,
-							Filepath:   filepath,
-							Code:       stCode,
+							Name:            tSpec.Name.Name,
+							QName:           stQName,
+							TypeQName:       tspecObj.Type().String(),
+							Underlying:      tspecObj.Type().Underlying().String(),
+							ImplementsQName: impl,
+							Kind:            Struct,
+							Pos:             pos,
+							End:             end,
+							Filepath:        filepath,
+							Code:            stCode,
 							Doc: Doc{
 								Comment: nd.Doc.Text(),
 								OfQName: stQName,
