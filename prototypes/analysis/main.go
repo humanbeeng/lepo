@@ -4,7 +4,11 @@ import "github.com/humanbeeng/lepo/prototypes/analysis/extract"
 
 func main() {
 	e := extract.NewGoExtractor()
-	err := e.Extract("github.com/humanbeeng/lepo/prototypes/go-testdata/current")
+	invoke(e)
+}
+
+func invoke(e extract.Extractor) {
+	err := e.Extract("github.com/humanbeeng/lepo/prototypes/analysis")
 	if err != nil {
 		panic(err)
 	}

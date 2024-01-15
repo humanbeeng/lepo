@@ -7,7 +7,7 @@ const (
 )
 
 type Extractor interface {
-	Extract(dirpath string) error
+	Extract(string) error
 }
 
 type GoExtractor struct {
@@ -44,16 +44,17 @@ type Constant struct {
 }
 
 type TypeDecl struct {
-	Name       string
-	QName      string
-	TypeQName  string
-	Underlying string
-	Code       string
-	Doc        Doc
-	Kind       Kind
-	Pos        int
-	End        int
-	Filepath   string
+	Name            string
+	QName           string
+	TypeQName       string
+	Underlying      string
+	ImplementsQName string
+	Code            string
+	Doc             Doc
+	Kind            Kind
+	Pos             int
+	End             int
+	Filepath        string
 	// Package    string
 }
 
