@@ -6,6 +6,7 @@ import (
 	"go/token"
 	"log/slog"
 	"strings"
+	"sync"
 
 	"golang.org/x/tools/go/packages"
 	"golang.org/x/tools/refactor/satisfy"
@@ -24,7 +25,7 @@ func (g GoExtractor) Extract(pkgstr string) error {
 		Mode: packages.NeedTypes | packages.NeedDeps | packages.NeedSyntax |
 			packages.NeedName | packages.NeedTypesInfo | packages.NeedImports,
 		Fset: fset,
-		Dir:  "/Users/apple/workspace/go/lepo/prototypes/analysis",
+		Dir:  "/Users/apple/workspace/go/lepo/prototypes/go-testdata",
 	}
 
 	// TODO: Take directory as input and get extract pkgstr using go mod file
@@ -40,7 +41,6 @@ func (g GoExtractor) Extract(pkgstr string) error {
 	// fxs := 0
 
 	packages.Visit(pkgs, nil, func(pkg *packages.Package) {
-		// TODO : Move this inside if condition below
 		// If this is your own package, process its structs.
 		if !strings.Contains(pkg.PkgPath, pkgstr) {
 			return
@@ -73,7 +73,6 @@ func (g GoExtractor) Extract(pkgstr string) error {
 		// 	Info:      pkg.TypesInfo,
 		// 	Functions: make(map[string]Function),
 		// }
-		// var wg *sync.WaitGroup
 
 		slog.Info("Files found", "count", len(pkg.Syntax))
 		fi := satisfy.Finder{Result: make(map[satisfy.Constraint]bool)}
@@ -83,7 +82,7 @@ func (g GoExtractor) Extract(pkgstr string) error {
 		implMap := make(map[string]string)
 
 		for r := range fi.Result {
-			implMap[r.LHS.String()] = r.RHS.String()
+			implMap[r.RHS.String()] = r.LHS.String()
 		}
 
 		tv := &TypeVisitor{
@@ -93,28 +92,30 @@ func (g GoExtractor) Extract(pkgstr string) error {
 			Implementors: implMap,
 			Members:      make(map[string]Member),
 		}
-		// For each file in package
 
-		for _, syn := range pkg.Syntax {
-			ast.Walk(tv, syn)
-			ast.Walk(iv, syn)
+		// For each file in package
+		wg := sync.WaitGroup{}
+		wg.Add(len(pkg.Syntax))
+
+		for _, file := range pkg.Syntax {
+			go func(syn *ast.File) {
+				ast.Walk(tv, syn)
+				ast.Walk(iv, syn)
+				wg.Done()
+			}(file)
 		}
+		wg.Wait()
 		// fmt.Println("Found", len(sv.TypeDecls), "types")
 
-		// for _, c := range tv.TypeDecls {
-		// 	fmt.Println("Name", c.Name)
-		// 	fmt.Println("Implements", c.ImplementsQName)
-		// 	fmt.Println("-------")
-		// }
-
-		for k, v := range implMap {
-			fmt.Println(k, "implements", v)
+		for _, c := range tv.TypeDecls {
+			fmt.Println("Name", c.Name)
+			fmt.Println("Implements", c.ImplementsQName)
 		}
 
-		// for _, m := range tv.Members {
-		// 	fmt.Println("Member:", m.Name)
-		// 	fmt.Println("Comment:", m.Doc.Comment)
-		// }
+		for _, m := range iv.TypeDecls {
+			fmt.Println("Name:", m.Name)
+			fmt.Println("TypeQName:", m.TypeQName)
+		}
 		// for _, m := range fv.Imports {
 		// 	fmt.Printf("%+v\n", m)
 		// }
