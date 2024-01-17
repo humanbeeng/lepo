@@ -1,7 +1,6 @@
 package extract
 
 import (
-	"fmt"
 	"go/ast"
 	"go/token"
 	"log/slog"
@@ -25,7 +24,8 @@ func (g GoExtractor) Extract(pkgstr string) error {
 			packages.NeedName | packages.NeedTypesInfo | packages.NeedImports,
 		Fset: fset,
 		// Dir:  "/Users/apple/workspace/go/lepo/prototypes/go-testdata",
-		Dir: "/Users/apple/workspace/misc/dgraph",
+		Dir: "/Users/apple/workspace/go/lepo/prototypes/analysis",
+		// Dir: "/Users/apple/workspace/misc/dgraph",
 	}
 
 	// TODO: Take directory as input and get extract pkgstr using go mod file
@@ -52,7 +52,6 @@ func (g GoExtractor) Extract(pkgstr string) error {
 			implMap[r.RHS.String()] = r.LHS.String()
 		}
 	})
-	fmt.Println("Len of impl", len(implMap))
 
 	// for k, v := range implMap {
 	// 	fmt.Println(k, "implements", v)
@@ -67,12 +66,12 @@ func (g GoExtractor) Extract(pkgstr string) error {
 
 		slog.Info("Analysing", "package", pkg.PkgPath)
 
-		iv := &InterfaceVisitor{
-			Fset:      fset,
-			Info:      pkg.TypesInfo,
-			TypeDecls: make(map[string]TypeDecl),
-			Members:   make(map[string]Member),
-		}
+		// iv := &InterfaceVisitor{
+		// 	Fset:      fset,
+		// 	Info:      pkg.TypesInfo,
+		// 	TypeDecls: make(map[string]TypeDecl),
+		// 	Members:   make(map[string]Member),
+		// }
 
 		// cv := &ConstVisitor{
 		// 	Fset:      fset,
@@ -87,39 +86,28 @@ func (g GoExtractor) Extract(pkgstr string) error {
 		// 	Info:    pkg.TypesInfo,
 		// }
 
-		// fv := &FunctionVisitor{
-		// 	Fset:      fset,
-		// 	Info:      pkg.TypesInfo,
-		// 	Functions: make(map[string]Function),
+		fv := &FunctionVisitor{
+			Fset:      fset,
+			Info:      pkg.TypesInfo,
+			Functions: make(map[string]Function),
+		}
+
+		// tv := &TypeVisitor{
+		// 	Fset:         fset,
+		// 	Info:         pkg.TypesInfo,
+		// 	TypeDecls:    make(map[string]TypeDecl),
+		// 	Implementors: implMap,
+		// 	Members:      make(map[string]Member),
 		// }
 
-		// slog.Info("Files found", "count", len(pkg.Syntax))
-
-		tv := &TypeVisitor{
-			Fset:         fset,
-			Info:         pkg.TypesInfo,
-			TypeDecls:    make(map[string]TypeDecl),
-			Implementors: implMap,
-			Members:      make(map[string]Member),
-		}
+		slog.Info("Files found in", "package", pkg.PkgPath, "count", len(pkg.Syntax))
 
 		// For each file in package
-
 		for _, file := range pkg.Syntax {
-			ast.Walk(tv, file)
-			ast.Walk(iv, file)
+			// ast.Walk(tv, file)
+			ast.Walk(fv, file)
 		}
 		// fmt.Println("Found", len(tv.TypeDecls), "types")
-
-		for _, c := range tv.TypeDecls {
-			if c.ImplementsQName == "" {
-				continue
-			}
-			fmt.Printf("-----\n\n")
-			fmt.Println("Name", c.Name)
-			fmt.Println("Implements", c.ImplementsQName)
-			fmt.Printf("-----\n\n")
-		}
 
 		// for _, m := range iv.TypeDecls {
 		// 	fmt.Println("Name:", m.Name)
