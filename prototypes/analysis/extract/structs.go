@@ -41,7 +41,12 @@ func (v *TypeVisitor) Visit(node ast.Node) ast.Visitor {
 							// TODO: Handle errors gracefully
 							panic(err)
 						}
-						impl := v.Implementors[stQName]
+						impl, ok := v.Implementors[stQName]
+						if !ok {
+							// Try with pointer type
+							stQNameWPtr := "*" + stQName
+							impl = v.Implementors[stQNameWPtr]
+						}
 
 						td := TypeDecl{
 							Name:            tSpec.Name.Name,

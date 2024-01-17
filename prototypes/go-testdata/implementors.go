@@ -31,10 +31,10 @@ func DoSomething(g Greeter) {
 }
 
 func main() {
-	fc := FancyGreeter{}
-	rg := RudeGreeter{}
-	ng := current.NiceGreeter{}
-	DoSomething(rg)
+	// fc := FancyGreeter{}
+	// rg := RudeGreeter{}
+	ng := &current.NiceGreeter{}
+	// DoSomething(rg)
 	DoSomething(ng)
-	DoSomething(fc)
+	// DoSomething(fc)
 }
