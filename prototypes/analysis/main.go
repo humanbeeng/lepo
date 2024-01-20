@@ -8,8 +8,8 @@ func main() {
 }
 
 func invoke(e extract.Extractor) {
-	// err := e.Extract("github.com/humanbeeng/lepo/prototypes/go-testdata")
-	err := e.Extract("github.com/humanbeeng/lepo/prototypes/analysis")
+	err := e.Extract("github.com/humanbeeng/lepo/prototypes/go-testdata")
+	// err := e.Extract("github.com/humanbeeng/lepo/prototypes/analysis")
 	if err != nil {
 		panic(err)
 	}

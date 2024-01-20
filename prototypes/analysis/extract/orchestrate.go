@@ -1,6 +1,7 @@
 package extract
 
 import (
+	"fmt"
 	"go/ast"
 	"go/token"
 	"log/slog"
@@ -15,7 +16,6 @@ func (g GoExtractor) Extract(pkgstr string) error {
 
 	// start := time.Now()
 
-	// orchestrate extract
 	slog.Info("Extraction requested for", "package", pkgstr)
 	// same into cfg.Check method
 	fset := token.NewFileSet()
@@ -23,8 +23,8 @@ func (g GoExtractor) Extract(pkgstr string) error {
 		Mode: packages.NeedTypes | packages.NeedDeps | packages.NeedSyntax |
 			packages.NeedName | packages.NeedTypesInfo | packages.NeedImports,
 		Fset: fset,
-		// Dir:  "/Users/apple/workspace/go/lepo/prototypes/go-testdata",
-		Dir: "/Users/apple/workspace/go/lepo/prototypes/analysis",
+		Dir:  "/Users/apple/workspace/go/lepo/prototypes/go-testdata",
+		// Dir: "/Users/apple/workspace/go/lepo/prototypes/analysis",
 		// Dir: "/Users/apple/workspace/misc/dgraph",
 	}
 
@@ -40,6 +40,7 @@ func (g GoExtractor) Extract(pkgstr string) error {
 	implMap := make(map[string]string)
 
 	packages.Visit(pkgs, nil, func(pkg *packages.Package) {
+		// Process implementations of given package only.
 		if !strings.Contains(pkg.PkgPath, pkgstr) {
 			return
 		}
@@ -53,13 +54,8 @@ func (g GoExtractor) Extract(pkgstr string) error {
 		}
 	})
 
-	// for k, v := range implMap {
-	// 	fmt.Println(k, "implements", v)
-	// 	fmt.Println("-------")
-	// }
-
 	packages.Visit(pkgs, nil, func(pkg *packages.Package) {
-		// If this is your own package, process its structs.
+		// Process nodes of given package only.
 		if !strings.Contains(pkg.PkgPath, pkgstr) {
 			return
 		}
@@ -73,11 +69,11 @@ func (g GoExtractor) Extract(pkgstr string) error {
 		// 	Members:   make(map[string]Member),
 		// }
 
-		// cv := &ConstVisitor{
-		// 	Fset:      fset,
-		// 	Info:      pkg.TypesInfo,
-		// 	Constants: make(map[string]Constant),
-		// }
+		nv := &NamedVisitor{
+			Fset:  fset,
+			Info:  pkg.TypesInfo,
+			Named: make(map[string]Named),
+		}
 
 		// fv := &FileVisitor{
 		// 	Imports: make([]Import, 0),
@@ -104,18 +100,28 @@ func (g GoExtractor) Extract(pkgstr string) error {
 
 		// For each file in package
 		for _, file := range pkg.Syntax {
-			// ast.Walk(tv, file)
+			// ast.Walk(fv, file)
 			ast.Walk(fv, file)
+			ast.Walk(nv, file)
 		}
 		// fmt.Println("Found", len(tv.TypeDecls), "types")
 
-		// for _, m := range iv.TypeDecls {
+		// for _, m := range fv.Functions {
 		// 	fmt.Println("Name:", m.Name)
-		// 	fmt.Println("TypeQName:", m.TypeQName)
+		// 	for _, c := range m.Calls {
+		// 		fmt.Println("Calls", c)
+		// 	}
 		// }
-		// for _, m := range fv.Imports {
-		// 	fmt.Printf("%+v\n", m)
-		// }
+
+		for _, t := range nv.Named {
+			fmt.Println("----------")
+			fmt.Println("Name", t.Name)
+			fmt.Println("QName", t.QName)
+			fmt.Println("Type", t.TypeQName)
+			fmt.Println("Underlying", t.Underlying)
+			fmt.Println("Comment", t.Doc.Comment)
+			fmt.Println("----------")
+		}
 	})
 
 	return nil

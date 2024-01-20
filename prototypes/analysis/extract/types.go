@@ -31,7 +31,7 @@ const (
 	Alias
 )
 
-type Constant struct {
+type Named struct {
 	Name       string
 	QName      string
 	TypeQName  string
