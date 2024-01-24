@@ -3,16 +3,24 @@ package extract
 type Language string
 
 const (
-	Go Language = "golang"
+	Go         Language = "golang"
+	Rust       Language = "rust"
+	Java       Language = "java"
+	JavaScript Language = "javascript"
+	TypeScript Language = "typescript"
 )
 
-type Extractor interface {
-	Extract(string) error
+type ExtractResult struct {
+	TypeDecls  map[string]TypeDecl
+	Members    map[string]Member
+	Interfaces map[string]TypeDecl
+	Functions  map[string]Function
+	NamedTypes map[string]Named
+	Files      map[string]File
 }
 
-type GoExtractor struct {
-	TypeDecls map[string]*TypeDecl
-	Members   map[string]*Member
+type Extractor interface {
+	Extract(pkgstr string, dir string) (ExtractResult, error)
 }
 
 type Node struct {
@@ -116,11 +124,4 @@ type Doc struct {
 	Comment string
 	OfQName string
 	Type    DocType
-}
-
-func NewGoExtractor() *GoExtractor {
-	return &GoExtractor{
-		TypeDecls: make(map[string]*TypeDecl),
-		Members:   make(map[string]*Member),
-	}
 }

@@ -1,0 +1,17 @@
+version: "3"
+
+services:
+  neo4j:
+    image: neo4j
+    container_name: neo4j-prototype
+    volumes:
+      - ./neo4j/data:/data
+      - ./neo4j/conf:/conf
+      - ./neo4j/import:/import
+    environment:
+      - NEO4J_AUTH=neo4j/password
+      - NEO4J_PLUGINS=["apoc", "graph-data-science"]
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*,gds.*
+    ports:
+      - "7474:7474"
+      - "7687:7687"
