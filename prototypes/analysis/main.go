@@ -1,16 +1,11 @@
 package main
 
-import "github.com/humanbeeng/lepo/prototypes/analysis/extract"
+import (
+	"github.com/humanbeeng/lepo/prototypes/analysis/extract/golang"
+	"github.com/humanbeeng/lepo/prototypes/analysis/process"
+)
 
 func main() {
-	e := extract.NewGoExtractor()
-	invoke(e)
-}
-
-func invoke(e extract.Extractor) {
-	err := e.Extract("github.com/humanbeeng/lepo/prototypes/go-testdata")
-	// err := e.Extract("github.com/humanbeeng/lepo/prototypes/analysis")
-	if err != nil {
-		panic(err)
-	}
+	e := golang.NewGoExtractor()
+	process.Orchestrate(e)
 }
