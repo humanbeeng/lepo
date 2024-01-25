@@ -31,12 +31,24 @@ type Node struct {
 	End      int
 }
 
-type Kind byte
+type Kind string
 
 const (
-	Interface Kind = iota
-	Struct
-	Alias
+	Interface Kind = "interface"
+	Struct    Kind = "struct"
+	Alias     Kind = "alias"
+)
+
+type Header string
+
+const (
+	Name           string = "name"
+	QualifiedName  string = "qualified_name"
+	TypeName       string = "type"
+	UnderlyingType string = "underlying_type"
+	Implements     string = "implements"
+	Code           string = "code"
+	Filepath       string = "file"
 )
 
 type Named struct {
