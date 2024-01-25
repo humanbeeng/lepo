@@ -17,10 +17,15 @@ func Orchestrate(e extract.Extractor) {
 		slog.Error("", err)
 	}
 
-	// Step 2: Transform
+	// Step 2: Export to CSV
 	csvt := CSVExporter{}
 
 	err = csvt.ExportTypes(extractRes.TypeDecls)
+	if err != nil {
+		slog.Error("", err)
+	}
+
+	err = csvt.ExportInterfaces(extractRes.Interfaces)
 	if err != nil {
 		slog.Error("", err)
 	}
