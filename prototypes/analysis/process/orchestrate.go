@@ -29,4 +29,9 @@ func Orchestrate(e extract.Extractor) {
 	if err != nil {
 		slog.Error("", err)
 	}
+
+	err = csvt.ExportNamed(extractRes.NamedTypes)
+	if err != nil {
+		slog.Error("", err)
+	}
 }

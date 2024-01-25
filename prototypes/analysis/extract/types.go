@@ -51,6 +51,7 @@ const (
 	Filepath       string = "file"
 )
 
+// TODO: Refactor this as TypeDecl
 type Named struct {
 	Name       string
 	QName      string
