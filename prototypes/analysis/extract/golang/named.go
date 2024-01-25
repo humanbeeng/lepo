@@ -72,18 +72,18 @@ func (v *NamedVisitor) Visit(node ast.Node) ast.Visitor {
 					filepath := v.Fset.Position(vs.Pos()).Filename
 
 					qname := vsObj.Pkg().Path() + "." + name.Name
+					code, _ := extractCode(node, v.Fset)
 
 					named := extract.Named{
 						Name:       name.Name,
 						QName:      qname,
 						TypeQName:  vsObj.Type().String(),
 						Underlying: vsObj.Type().Underlying().String(),
-						// TODO: Get code
-						Code:     "",
-						Doc:      extract.Doc{Comment: vs.Doc.Text() + vs.Comment.Text(), OfQName: qname},
-						Pos:      pos,
-						End:      end,
-						Filepath: filepath,
+						Code:       code,
+						Doc:        extract.Doc{Comment: vs.Doc.Text() + vs.Comment.Text(), OfQName: qname},
+						Pos:        pos,
+						End:        end,
+						Filepath:   filepath,
 					}
 					v.Named[qname] = named
 				}

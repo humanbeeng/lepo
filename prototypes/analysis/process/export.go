@@ -55,6 +55,7 @@ func (c *CSVExporter) ExportTypes(types map[string]extract.TypeDecl) error {
 			return err
 		}
 	}
+
 	csvwriter.Flush()
 	err = csvwriter.Error()
 	if err != nil {
@@ -116,6 +117,62 @@ func (c *CSVExporter) ExportInterfaces(types map[string]extract.TypeDecl) error 
 		slog.Error("Unable to flush to interface.csv file", err)
 	}
 	slog.Info("Finished exporting types to interface.csv file")
+
+	return nil
+}
+
+func (c *CSVExporter) ExportNamed(named map[string]extract.Named) error {
+	slog.Info("Exporting named types to csv")
+
+	csvFile, err := os.Create("neo4j/import/named.csv")
+	if err != nil {
+		return fmt.Errorf("Unable to create named.csv %v", err)
+	}
+
+	defer csvFile.Close()
+
+	csvwriter := csv.NewWriter(csvFile)
+
+	header := []string{
+		extract.Name,
+		extract.QualifiedName,
+		extract.TypeName,
+		extract.UnderlyingType,
+		"kind",
+		extract.Code,
+		"doc",
+	}
+
+	err = csvwriter.Write(header)
+	if err != nil {
+		// TODO: Refactor slog error. Follow best practice
+		return fmt.Errorf("Unable to write header to named.csv %v", err)
+	}
+
+	for qname, n := range named {
+		tqn := n.TypeQName
+		und := n.Underlying
+		code := n.Code
+
+		code = escapeStr(code)
+		und = escapeStr(und)
+		tqn = escapeStr(tqn)
+
+		// TODO : Refer schema for named types and revisit this name: named
+		row := []string{n.Name, qname, tqn, und, "named", code, n.Doc.Comment}
+		err := csvwriter.Write(row)
+		if err != nil {
+			slog.Error("Unable to write to named.csv file", err)
+			return err
+		}
+	}
+
+	csvwriter.Flush()
+	err = csvwriter.Error()
+	if err != nil {
+		slog.Error("Unable to flush to named.csv file", err)
+	}
+	slog.Info("Finished exporting types to named.csv file")
 
 	return nil
 }
