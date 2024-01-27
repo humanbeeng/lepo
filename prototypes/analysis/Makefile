@@ -4,3 +4,9 @@ run:
 build:
 	go build -o /bin/analysis
 
+du:
+	docker compose up -d
+
+dd:
+	docker compose down
+

@@ -31,14 +31,24 @@ func (v *BodyVisitor) Visit(node ast.Node) ast.Visitor {
 }
 
 func (v *BodyVisitor) handleCallExpr(ce *ast.CallExpr) {
+	if ce == nil {
+		return
+	}
 	if id, ok := ce.Fun.(*ast.Ident); ok {
 		ceObj := v.Info.Uses[id]
 		if ceObj != nil {
+			if ceObj.Pkg() == nil {
+				return
+			}
 			callee := ceObj.Pkg().Path() + "." + ceObj.Name()
 			v.Calls = append(v.Calls, callee)
 		}
 	} else if se, ok := ce.Fun.(*ast.SelectorExpr); ok {
 		seObj := v.Info.Uses[se.Sel]
+		if seObj.Pkg() == nil {
+			return
+		}
+
 		if seObj != nil {
 			callee := seObj.Pkg().Path() + "." + seObj.Name()
 			v.Calls = append(v.Calls, callee)

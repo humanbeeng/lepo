@@ -1,13 +1,11 @@
 package extract
 
-type Language string
-
 const (
-	Go         Language = "golang"
-	Rust       Language = "rust"
-	Java       Language = "java"
-	JavaScript Language = "javascript"
-	TypeScript Language = "typescript"
+	Go         string = "golang"
+	Rust       string = "rust"
+	Java       string = "java"
+	JavaScript string = "javascript"
+	TypeScript string = "typescript"
 )
 
 type ExtractResult struct {
@@ -39,8 +37,6 @@ const (
 	Alias     Kind = "alias"
 )
 
-type Header string
-
 const (
 	Name           string = "name"
 	QualifiedName  string = "qualified_name"
@@ -48,7 +44,11 @@ const (
 	UnderlyingType string = "underlying_type"
 	Implements     string = "implements"
 	Code           string = "code"
-	Filepath       string = "file"
+	Filename       string = "file"
+	Package        string = "package"
+	Language       string = "language"
+	Path           string = "path"
+	Comment        string = "comment"
 )
 
 // TODO: Refactor this as TypeDecl
@@ -84,8 +84,8 @@ type ExtractNodesResult struct{}
 type File struct {
 	Filename string
 	Package  string
-	Imports  []string
-	Language Language
+	Imports  []Import
+	Language string
 }
 
 type Namespace struct {
