@@ -10,7 +10,7 @@ import (
 
 type FileVisitor struct {
 	Package string
-	Imports []extract.Import
+	Files   map[string]extract.File
 	Fset    *token.FileSet
 	Info    *types.Info
 }
@@ -23,6 +23,14 @@ func (v *FileVisitor) Visit(node ast.Node) ast.Visitor {
 	switch nd := node.(type) {
 	case *ast.File:
 		{
+			filename := v.Fset.Position(nd.Pos()).Filename
+
+			f := extract.File{
+				Filename: filename,
+				Package:  v.Package,
+				Language: extract.Go,
+				Imports:  make([]extract.Import, 0),
+			}
 
 			for _, d := range nd.Decls {
 				gd, ok := d.(*ast.GenDecl)
@@ -46,10 +54,9 @@ func (v *FileVisitor) Visit(node ast.Node) ast.Visitor {
 					if is.Name != nil {
 						i.Name = is.Name.Name
 					}
-
-					v.Imports = append(v.Imports, i)
+					f.Imports = append(f.Imports, i)
 				}
-
+				v.Files[f.Package+"."+f.Filename] = f
 			}
 			return v
 		}

@@ -56,9 +56,9 @@ func (g *GoExtractor) Extract(pkgstr string, dir string) (extract.ExtractResult,
 		TypeDecls:  make(map[string]extract.TypeDecl),
 		Interfaces: make(map[string]extract.TypeDecl),
 		NamedTypes: make(map[string]extract.Named),
-		Files:      make(map[string]extract.File),
 		Members:    make(map[string]extract.Member),
 		Functions:  make(map[string]extract.Function),
+		Files:      make(map[string]extract.File),
 	}
 
 	packages.Visit(pkgs, nil, func(pkg *packages.Package) {
@@ -112,7 +112,7 @@ func (g *GoExtractor) Extract(pkgstr string, dir string) (extract.ExtractResult,
 			Package: pkg.PkgPath,
 			Fset:    fset,
 			Info:    pkg.TypesInfo,
-			Imports: make([]extract.Import, 0),
+			Files:   extractRes.Files,
 		}
 
 		iv := &InterfaceVisitor{
@@ -123,7 +123,7 @@ func (g *GoExtractor) Extract(pkgstr string, dir string) (extract.ExtractResult,
 		}
 
 		for _, file := range pkg.Syntax {
-			slog.Info("Walking", "file", file.Name.Name)
+			slog.Info("Walking", "file", fset.Position(file.Pos()).Filename)
 			ast.Walk(tv, file)
 			ast.Walk(nv, file)
 			ast.Walk(fv, file)
