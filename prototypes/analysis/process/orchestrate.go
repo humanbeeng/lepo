@@ -11,9 +11,10 @@ func Orchestrate(e extract.Extractor) {
 	// Step 1: Extract
 	extractRes, err := e.Extract(
 		// "github.com/humanbeeng/lepo/prototypes/go-testdata",
+		// "/Users/apple/workspace/go/lepo/prototypes/go-testdata",
+
 		"github.com/dgraph-io/dgraph",
 		"/Users/apple/workspace/misc/dgraph",
-		// "/Users/apple/workspace/go/lepo/prototypes/go-testdata",
 	)
 	if err != nil {
 		slog.Error("", err)

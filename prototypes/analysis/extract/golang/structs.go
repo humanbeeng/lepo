@@ -12,12 +12,12 @@ import (
 
 type TypeVisitor struct {
 	ast.Visitor
-	Fset         *token.FileSet
-	Info         *types.Info
-	TypeDecls    map[string]extract.TypeDecl
-	Implementors map[string]string
-	Members      map[string]extract.Member
-	Package      string
+	Fset       *token.FileSet
+	Info       *types.Info
+	TypeDecls  map[string]extract.TypeDecl
+	Implements map[string][]string
+	Members    map[string]extract.Member
+	Package    string
 }
 
 func (v *TypeVisitor) Visit(node ast.Node) ast.Visitor {
@@ -44,11 +44,11 @@ func (v *TypeVisitor) Visit(node ast.Node) ast.Visitor {
 							// TODO: Handle errors gracefully
 							panic(err)
 						}
-						impl, ok := v.Implementors[stQName]
+						impl, ok := v.Implements[stQName]
 						if !ok {
 							// Try with pointer type
 							stQNameWPtr := "*" + stQName
-							impl = v.Implementors[stQNameWPtr]
+							impl = v.Implements[stQNameWPtr]
 						}
 
 						td := extract.TypeDecl{
