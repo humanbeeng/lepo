@@ -37,8 +37,6 @@ func (g *GoExtractor) Extract(pkgstr string, dir string) (extract.ExtractResult,
 			packages.NeedName | packages.NeedTypesInfo | packages.NeedImports,
 		Fset: fset,
 		Dir:  dir,
-		// Dir: "/Users/apple/workspace/go/lepo/prototypes/analysis",
-		// Dir: "/Users/apple/workspace/misc/dgraph",
 	}
 
 	// TODO: Take directory as input and get extract pkgstr using go mod file
@@ -50,7 +48,7 @@ func (g *GoExtractor) Extract(pkgstr string, dir string) (extract.ExtractResult,
 
 	slog.Info("Packages found", "count", len(pkgs))
 
-	implMap := make(map[string]string)
+	implMap := make(map[string][]string)
 
 	extractRes := extract.ExtractResult{
 		TypeDecls:  make(map[string]extract.TypeDecl),
@@ -74,7 +72,7 @@ func (g *GoExtractor) Extract(pkgstr string, dir string) (extract.ExtractResult,
 
 		// Transform Finder Result map to make it queryable
 		for r := range fi.Result {
-			implMap[r.RHS.String()] = r.LHS.String()
+			implMap[r.RHS.String()] = append(implMap[r.RHS.String()], r.LHS.String())
 		}
 	})
 
@@ -88,12 +86,12 @@ func (g *GoExtractor) Extract(pkgstr string, dir string) (extract.ExtractResult,
 		slog.Info("Files found in", "package", pkg.PkgPath, "count", len(pkg.Syntax))
 
 		tv := &TypeVisitor{
-			Fset:         fset,
-			Info:         pkg.TypesInfo,
-			TypeDecls:    extractRes.TypeDecls,
-			Implementors: implMap,
-			Members:      extractRes.Members,
-			Package:      pkg.PkgPath,
+			Fset:       fset,
+			Info:       pkg.TypesInfo,
+			TypeDecls:  extractRes.TypeDecls,
+			Implements: implMap,
+			Members:    extractRes.Members,
+			Package:    pkg.PkgPath,
 		}
 
 		nv := &NamedVisitor{

@@ -69,7 +69,7 @@ type TypeDecl struct {
 	QName           string
 	TypeQName       string
 	Underlying      string
-	ImplementsQName string
+	ImplementsQName []string
 	Code            string
 	Doc             Doc
 	Kind            Kind

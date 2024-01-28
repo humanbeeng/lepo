@@ -10,6 +10,11 @@ type NiceGreeter struct {
 	Name string
 }
 
+func (nc *NiceGreeter) PrintHello(msg string) error {
+	fmt.Println("Hello")
+	return nil
+}
+
 func (nc *NiceGreeter) Greet(msg string) (string, error) {
 	fmt.Println("Greeting nicely", msg)
 	var p Printer

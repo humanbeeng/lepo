@@ -1,5 +1,5 @@
 **/node_modules
 **/out
 .env
-**/.DS_STORE
+.DS_STORE
 neo4j/
