@@ -47,6 +47,11 @@ func Orchestrate(e extract.Extractor) {
 		slog.Error("", err)
 	}
 
+	err = csvt.ExportNamespace(extractRes.Namespaces)
+	if err != nil {
+		slog.Error("", err)
+	}
+
 	csvr := CSVRelationshipExporter{}
 
 	err = csvr.ExportCalls(extractRes.Functions)
