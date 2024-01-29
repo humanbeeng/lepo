@@ -8,17 +8,18 @@ const (
 	TypeScript string = "typescript"
 )
 
-type ExtractResult struct {
+type ExtractNodesResult struct {
 	TypeDecls  map[string]TypeDecl
 	Members    map[string]Member
 	Interfaces map[string]TypeDecl
 	Functions  map[string]Function
 	NamedTypes map[string]Named
 	Files      map[string]File
+	Namespaces []Namespace
 }
 
 type Extractor interface {
-	Extract(pkgstr string, dir string) (ExtractResult, error)
+	Extract(pkgstr string, dir string) (ExtractNodesResult, error)
 }
 
 type Node struct {
@@ -79,8 +80,6 @@ type TypeDecl struct {
 	// Package    string
 }
 
-type ExtractNodesResult struct{}
-
 type File struct {
 	Filename string
 	Package  string
@@ -89,7 +88,7 @@ type File struct {
 }
 
 type Namespace struct {
-	Node
+	Name string
 }
 
 type Member struct {

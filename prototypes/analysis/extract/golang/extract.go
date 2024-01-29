@@ -25,7 +25,7 @@ func NewGoExtractor() *GoExtractor {
 	}
 }
 
-func (g *GoExtractor) Extract(pkgstr string, dir string) (extract.ExtractResult, error) {
+func (g *GoExtractor) Extract(pkgstr string, dir string) (extract.ExtractNodesResult, error) {
 	// TODO: Change or add directory path as well.
 	start := time.Now()
 
@@ -43,14 +43,14 @@ func (g *GoExtractor) Extract(pkgstr string, dir string) (extract.ExtractResult,
 	pkgs, err := packages.Load(cfg, pkgstr+"...")
 	if err != nil {
 		slog.Error("Unable to load", "package", pkgstr)
-		return extract.ExtractResult{}, err
+		return extract.ExtractNodesResult{}, err
 	}
 
 	slog.Info("Packages found", "count", len(pkgs))
 
 	implMap := make(map[string][]string)
 
-	extractRes := extract.ExtractResult{
+	extractRes := extract.ExtractNodesResult{
 		TypeDecls:  make(map[string]extract.TypeDecl),
 		Interfaces: make(map[string]extract.TypeDecl),
 		NamedTypes: make(map[string]extract.Named),
@@ -81,6 +81,13 @@ func (g *GoExtractor) Extract(pkgstr string, dir string) (extract.ExtractResult,
 		if !strings.Contains(pkg.PkgPath, pkgstr) {
 			return
 		}
+
+		extractRes.Namespaces = append(
+			extractRes.Namespaces,
+			extract.Namespace{
+				Name: pkg.PkgPath,
+			},
+		)
 
 		slog.Info("Analysing", "package", pkg.PkgPath)
 		slog.Info("Files found in", "package", pkg.PkgPath, "count", len(pkg.Syntax))
