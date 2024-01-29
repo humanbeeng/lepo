@@ -306,3 +306,44 @@ func (c *CSVNodeExporter) ExportFile(files map[string]extract.File) error {
 
 	return nil
 }
+
+func (c *CSVNodeExporter) ExportNamespace(namespaces []extract.Namespace) error {
+	slog.Info("Exporting structs to csv")
+
+	csvFile, err := os.Create("neo4j/import/namespace.csv")
+	if err != nil {
+		return fmt.Errorf("Unable to create namespace.csv %v", err)
+	}
+
+	defer csvFile.Close()
+
+	csvwriter := csv.NewWriter(csvFile)
+
+	header := []string{
+		extract.Name,
+	}
+
+	err = csvwriter.Write(header)
+	if err != nil {
+		return fmt.Errorf("Unable to write header to namespace.csv %v", err)
+	}
+
+	for _, t := range namespaces {
+
+		row := []string{t.Name}
+		err := csvwriter.Write(row)
+		if err != nil {
+			slog.Error("Unable to write to namespace.csv file", err)
+			return err
+		}
+	}
+
+	csvwriter.Flush()
+	err = csvwriter.Error()
+	if err != nil {
+		slog.Error("Unable to flush to namespace.csv file", err)
+	}
+
+	slog.Info("Finished exporting types to namespace.csv file")
+	return nil
+}
