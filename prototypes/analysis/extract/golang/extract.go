@@ -13,16 +13,10 @@ import (
 	"github.com/humanbeeng/lepo/prototypes/analysis/extract"
 )
 
-type GoExtractor struct {
-	TypeDecls map[string]*extract.TypeDecl
-	Members   map[string]*extract.Member
-}
+type GoExtractor struct{}
 
 func NewGoExtractor() *GoExtractor {
-	return &GoExtractor{
-		TypeDecls: make(map[string]*extract.TypeDecl),
-		Members:   make(map[string]*extract.Member),
-	}
+	return &GoExtractor{}
 }
 
 func (g *GoExtractor) Extract(pkgstr string, dir string) (extract.ExtractNodesResult, error) {

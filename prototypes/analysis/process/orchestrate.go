@@ -27,6 +27,11 @@ func Orchestrate(e extract.Extractor) {
 		slog.Error("", err)
 	}
 
+	err = csvt.ExportMembers(extractRes.Members)
+	if err != nil {
+		slog.Error("", err)
+	}
+
 	err = csvt.ExportInterfaces(extractRes.Interfaces)
 	if err != nil {
 		slog.Error("", err)

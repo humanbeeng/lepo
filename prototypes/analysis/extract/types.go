@@ -39,17 +39,18 @@ const (
 )
 
 const (
-	Name           string = "name"
-	QualifiedName  string = "qualified_name"
-	TypeName       string = "type"
-	UnderlyingType string = "underlying_type"
-	Implements     string = "implements"
-	Code           string = "code"
-	Filename       string = "file"
-	Package        string = "package"
-	Language       string = "language"
-	Path           string = "path"
-	Comment        string = "comment"
+	Name                string = "name"
+	QualifiedName       string = "qualified_name"
+	TypeName            string = "type"
+	UnderlyingType      string = "underlying_type"
+	ParentQualifiedName string = "parent_qualified_name"
+	Implements          string = "implements"
+	Code                string = "code"
+	Filename            string = "file"
+	Package             string = "package"
+	Language            string = "language"
+	Path                string = "path"
+	Comment             string = "comment"
 )
 
 // TODO: Refactor this as TypeDecl
