@@ -83,7 +83,7 @@ func (c *CSVNodeExporter) ExportFunctions(functions map[string]extract.Function)
 	header := []string{
 		extract.Name,
 		extract.QualifiedName,
-		"parent_qualified_name",
+		extract.ParentQualifiedName,
 		"kind",
 		extract.Code,
 		"doc",
@@ -345,5 +345,67 @@ func (c *CSVNodeExporter) ExportNamespace(namespaces []extract.Namespace) error 
 	}
 
 	slog.Info("Finished exporting types to namespace.csv file")
+	return nil
+}
+
+func (c *CSVNodeExporter) ExportMembers(members map[string]extract.Member) error {
+	slog.Info("Exporting members to csv")
+
+	csvFile, err := os.Create("neo4j/import/members.csv")
+	if err != nil {
+		return fmt.Errorf("Unable to create members.csv %v", err)
+	}
+
+	defer csvFile.Close()
+
+	csvwriter := csv.NewWriter(csvFile)
+
+	header := []string{
+		extract.Name,
+		extract.QualifiedName,
+		extract.TypeName,
+		extract.ParentQualifiedName,
+		"kind",
+		extract.Code,
+		"doc",
+	}
+
+	err = csvwriter.Write(header)
+	if err != nil {
+		// TODO: Refactor slog error. Follow best practice
+		return fmt.Errorf("Unable to write header to members.csv %v", err)
+	}
+
+	for qname, t := range members {
+		tqn := t.TypeQName
+		code := t.Code
+
+		code = escapeStr(code)
+		tqn = escapeStr(tqn)
+
+		row := []string{
+			t.Name,
+			qname,
+			tqn,
+			t.ParentQName,
+			// TODO: Refactor kind as header constant
+			"kind",
+			code,
+			t.Doc.Comment,
+		}
+		err := csvwriter.Write(row)
+		if err != nil {
+			slog.Error("Unable to write to members.csv file", err)
+			return err
+		}
+	}
+
+	csvwriter.Flush()
+	err = csvwriter.Error()
+	if err != nil {
+		slog.Error("Unable to flush to members.csv file", err)
+	}
+
+	slog.Info("Finished exporting types to members.csv file")
 	return nil
 }
