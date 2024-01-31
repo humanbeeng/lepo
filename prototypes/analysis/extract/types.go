@@ -16,6 +16,7 @@ type ExtractNodesResult struct {
 	NamedTypes map[string]Named
 	Files      map[string]File
 	Namespaces []Namespace
+	Vars       map[string]Variable
 }
 
 type Extractor interface {
@@ -52,6 +53,20 @@ const (
 	Path                string = "path"
 	Comment             string = "comment"
 )
+
+type Variable struct {
+	Name       string
+	QName      string
+	TypeQName  string
+	Underlying string
+
+	Code     string
+	Doc      Doc
+	Pos      int
+	End      int
+	Filepath string
+	Package  string
+}
 
 // TODO: Refactor this as TypeDecl
 type Named struct {

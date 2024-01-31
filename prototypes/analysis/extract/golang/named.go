@@ -50,7 +50,8 @@ func (v *NamedVisitor) Visit(node ast.Node) ast.Visitor {
 								Doc: extract.Doc{
 									Comment: ts.Doc.Text() + ts.Comment.Text(),
 									OfQName: ftQName,
-									Type:    extract.SingleLine,
+									// TODO: Revisit
+									Type: extract.SingleLine,
 								},
 							}
 							v.Named[ftQName] = funcType
