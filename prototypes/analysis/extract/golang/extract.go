@@ -51,6 +51,7 @@ func (g *GoExtractor) Extract(pkgstr string, dir string) (extract.ExtractNodesRe
 		Members:    make(map[string]extract.Member),
 		Functions:  make(map[string]extract.Function),
 		Files:      make(map[string]extract.File),
+		Vars:       make(map[string]extract.Variable),
 	}
 
 	packages.Visit(pkgs, nil, func(pkg *packages.Package) {
@@ -101,6 +102,12 @@ func (g *GoExtractor) Extract(pkgstr string, dir string) (extract.ExtractNodesRe
 			Named: extractRes.NamedTypes,
 		}
 
+		vv := &VarVisitor{
+			Fset: fset,
+			Info: pkg.TypesInfo,
+			Vars: extractRes.Vars,
+		}
+
 		fv := &FunctionVisitor{
 			Fset:      fset,
 			Info:      pkg.TypesInfo,
@@ -128,6 +135,7 @@ func (g *GoExtractor) Extract(pkgstr string, dir string) (extract.ExtractNodesRe
 			ast.Walk(fv, file)
 			ast.Walk(fiv, file)
 			ast.Walk(iv, file)
+			ast.Walk(vv, file)
 		}
 	})
 
