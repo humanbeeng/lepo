@@ -100,6 +100,11 @@ func (c *CSVNodeExporter) ExportFunctions(functions map[string]extract.Function)
 
 		code = escapeStr(code)
 
+		// TODO: Find out why the node has empty values yet has a call
+		if f.Filepath == "" {
+			continue
+		}
+
 		row := []string{f.Name, qname, f.ParentQName, "function", code, f.Doc.Comment, f.Filepath}
 		err := csvwriter.Write(row)
 		if err != nil {
@@ -250,14 +255,16 @@ func (c *CSVNodeExporter) ExportFile(files map[string]extract.File) error {
 
 	fileHeader := []string{
 		extract.Filename,
-		extract.Package,
+		"namespace",
 		extract.Language,
+		"kind",
 	}
 
 	importHeader := []string{
 		extract.Name,
 		extract.Path,
 		extract.Comment,
+		"kind",
 	}
 
 	err = fileWriter.Write(fileHeader)
@@ -273,7 +280,7 @@ func (c *CSVNodeExporter) ExportFile(files map[string]extract.File) error {
 
 	for _, file := range files {
 		// TODO : Refer schema for named types and revisit this name: named
-		row := []string{file.Filename, file.Package, file.Language}
+		row := []string{file.Filename, file.Namespace, file.Language, "file"}
 		err := fileWriter.Write(row)
 		if err != nil {
 			slog.Error("Unable to write row to file.csv file", err)
@@ -281,7 +288,7 @@ func (c *CSVNodeExporter) ExportFile(files map[string]extract.File) error {
 		}
 
 		for _, i := range file.Imports {
-			importRow := []string{i.Name, i.Path, i.Doc.Comment}
+			importRow := []string{i.Name, i.Path, i.Doc.Comment, "import"}
 			err := importWriter.Write(importRow)
 			if err != nil {
 				slog.Error("Unable to write row to import.csv", err)
@@ -321,6 +328,7 @@ func (c *CSVNodeExporter) ExportNamespace(namespaces []extract.Namespace) error 
 
 	header := []string{
 		extract.Name,
+		"kind",
 	}
 
 	err = csvwriter.Write(header)
@@ -329,8 +337,7 @@ func (c *CSVNodeExporter) ExportNamespace(namespaces []extract.Namespace) error 
 	}
 
 	for _, t := range namespaces {
-
-		row := []string{t.Name}
+		row := []string{t.Name, "namespace"}
 		err := csvwriter.Write(row)
 		if err != nil {
 			slog.Error("Unable to write to namespace.csv file", err)
@@ -389,7 +396,7 @@ func (c *CSVNodeExporter) ExportMembers(members map[string]extract.Member) error
 			tqn,
 			t.ParentQName,
 			// TODO: Refactor kind as header constant
-			"kind",
+			"member",
 			code,
 			t.Doc.Comment,
 		}

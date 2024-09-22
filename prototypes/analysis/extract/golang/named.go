@@ -40,8 +40,11 @@ func (v *NamedVisitor) Visit(node ast.Node) ast.Visitor {
 								slog.Error("Unable to extract code", "qname", ftQName)
 							}
 							funcType := extract.Named{
-								Name:       ftObj.Name(),
-								QName:      ftQName,
+								Name:  ftObj.Name(),
+								QName: ftQName,
+								Namespace: extract.Namespace{
+									Name: ftObj.Pkg().Path(),
+								},
 								TypeQName:  ftObj.Type().String(),
 								Underlying: ftObj.Type().Underlying().String(),
 								Pos:        pos,

@@ -24,8 +24,8 @@ func (c *CSVRelationshipExporter) ExportImplements(types map[string]extract.Type
 	csvwriter := csv.NewWriter(csvFile)
 
 	header := []string{
-		"implementor",
-		"interface",
+		"from",
+		"to",
 	}
 
 	err = csvwriter.Write(header)
@@ -46,7 +46,7 @@ func (c *CSVRelationshipExporter) ExportImplements(types map[string]extract.Type
 	csvwriter.Flush()
 	err = csvwriter.Error()
 	if err != nil {
-		slog.Error("Unable to flush to implements.csv", "err", err)
+		return fmt.Errorf("unable to flush to implements.csv: %w", err)
 	}
 
 	slog.Info("Finished exporting to implements.csv")
@@ -72,7 +72,7 @@ func (c *CSVRelationshipExporter) ExportCalls(functions map[string]extract.Funct
 
 	err = csvwriter.Write(header)
 	if err != nil {
-		return fmt.Errorf("Unable to write header to calls.csv")
+		return fmt.Errorf("unable to write header to calls.csv")
 	}
 
 	for qname, f := range functions {
@@ -80,8 +80,7 @@ func (c *CSVRelationshipExporter) ExportCalls(functions map[string]extract.Funct
 			row := []string{qname, call}
 			err := csvwriter.Write(row)
 			if err != nil {
-				slog.Error("Unable to write call row to calls.csv", "err", err)
-				return err
+				return fmt.Errorf("unable to write call row to calls.csv: %w", err)
 			}
 		}
 	}
@@ -89,9 +88,51 @@ func (c *CSVRelationshipExporter) ExportCalls(functions map[string]extract.Funct
 	csvwriter.Flush()
 	err = csvwriter.Error()
 	if err != nil {
-		slog.Error("Unable to flush to calls.csv", "err", err)
+		return fmt.Errorf("unable to flush to calls.csv: %w", err)
 	}
 	slog.Info("Finished exporting callgraph to calls.csv")
 
+	return nil
+}
+
+func (c *CSVRelationshipExporter) ExportImports(files map[string]extract.File) error {
+	slog.Info("Exporting imports relationship to csv")
+
+	csvFile, err := os.Create("neo4j/import/imports.csv")
+	if err != nil {
+		return fmt.Errorf("Unable to create imports.csv")
+	}
+
+	defer csvFile.Close()
+
+	csvwriter := csv.NewWriter(csvFile)
+
+	header := []string{
+		"from",
+		"to",
+	}
+
+	err = csvwriter.Write(header)
+	if err != nil {
+		return fmt.Errorf("unable to write header to imports.csv: %w", err)
+	}
+
+	for _, f := range files {
+		for _, imports := range f.Imports {
+			row := []string{f.Filename, imports.Path}
+			err := csvwriter.Write(row)
+			if err != nil {
+				return fmt.Errorf("unable to write import row to imports.csv: %w", err)
+			}
+		}
+	}
+
+	csvwriter.Flush()
+	err = csvwriter.Error()
+	if err != nil {
+		return fmt.Errorf("unable to flush to imports.csv: %w", err)
+	}
+
+	slog.Info("Finished exporting to imports.csv")
 	return nil
 }

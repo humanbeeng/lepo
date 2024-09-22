@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
+	"strings"
 
 	"github.com/humanbeeng/lepo/prototypes/analysis/extract"
 )
@@ -23,13 +24,14 @@ func (v *FileVisitor) Visit(node ast.Node) ast.Visitor {
 	switch nd := node.(type) {
 	case *ast.File:
 		{
+			// TODO: Remove absolute paths
 			filename := v.Fset.Position(nd.Pos()).Filename
 
 			f := extract.File{
-				Filename: filename,
-				Package:  v.Package,
-				Language: extract.Go,
-				Imports:  make([]extract.Import, 0),
+				Filename:  filename,
+				Namespace: v.Package,
+				Language:  extract.Go,
+				Imports:   make([]extract.Import, 0),
 			}
 
 			for _, d := range nd.Decls {
@@ -44,7 +46,7 @@ func (v *FileVisitor) Visit(node ast.Node) ast.Visitor {
 						continue
 					}
 					i := extract.Import{
-						Path: is.Path.Value,
+						Path: strings.Trim(is.Path.Value, "\""),
 						Doc: extract.Doc{
 							Comment: is.Doc.Text() + is.Comment.Text(),
 							OfQName: is.Path.Value,
@@ -56,7 +58,7 @@ func (v *FileVisitor) Visit(node ast.Node) ast.Visitor {
 					}
 					f.Imports = append(f.Imports, i)
 				}
-				v.Files[f.Package+"."+f.Filename] = f
+				v.Files[f.Namespace+"."+f.Filename] = f
 			}
 			return v
 		}
