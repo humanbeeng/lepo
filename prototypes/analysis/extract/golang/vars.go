@@ -53,7 +53,7 @@ func (v *VarVisitor) Visit(node ast.Node) ast.Visitor {
 							// TODO: Revisit
 							Type: extract.SingleLine,
 						},
-						Package: vsObj.Pkg().Path(),
+						Namespace: vsObj.Pkg().Path(),
 					}
 
 					v.Vars[qname] = variable

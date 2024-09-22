@@ -24,8 +24,8 @@ func (c *CSVRelationshipExporter) ExportImplements(types map[string]extract.Type
 	csvwriter := csv.NewWriter(csvFile)
 
 	header := []string{
-		"implementor",
-		"interface",
+		"from",
+		"to",
 	}
 
 	err = csvwriter.Write(header)
@@ -117,9 +117,9 @@ func (c *CSVRelationshipExporter) ExportImports(files map[string]extract.File) e
 		return fmt.Errorf("unable to write header to imports.csv: %w", err)
 	}
 
-	for qname, f := range files {
+	for _, f := range files {
 		for _, imports := range f.Imports {
-			row := []string{qname, imports.Path}
+			row := []string{f.Filename, imports.Path}
 			err := csvwriter.Write(row)
 			if err != nil {
 				return fmt.Errorf("unable to write import row to imports.csv: %w", err)

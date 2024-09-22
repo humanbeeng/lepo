@@ -63,12 +63,12 @@ type Variable struct {
 	TypeQName  string
 	Underlying string
 
-	Code     string
-	Doc      Doc
-	Pos      int
-	End      int
-	Filepath string
-	Package  string
+	Code      string
+	Doc       Doc
+	Pos       int
+	End       int
+	Filepath  string
+	Namespace string
 }
 
 // TODO: Refactor this as TypeDecl
@@ -115,6 +115,7 @@ type Namespace struct {
 type Member struct {
 	Name        string
 	QName       string
+	Namespace   Namespace
 	TypeQName   string
 	ParentQName string
 	Code        string
@@ -127,6 +128,7 @@ type Member struct {
 type Function struct {
 	Name         string
 	QName        string
+	Namespace    Namespace
 	ParentQName  string
 	Calls        []string
 	Doc          Doc

@@ -12,12 +12,8 @@ func Orchestrate(e extract.Extractor) {
 	slog.Info("Begin orchestration")
 	// Step 1: Extract
 	extractRes, err := e.Extract(
-		// "github.com/humanbeeng/lepo/prototypes/go-testdata",
 		"github.com/ardanlabs/service",
-		"/Users/humanbeeng/workspace/go/ardan-labs/service",
-
-		// "github.com/dgraph-io/dgraph",
-		// "/Users/apple/workspace/misc/dgraph",
+		"/home/nithin/workspace/go/service/",
 	)
 	if err != nil {
 		slog.Error("Something went wrong while orchestrating", "err", err)
@@ -63,16 +59,16 @@ func Orchestrate(e extract.Extractor) {
 
 	csvr := CSVRelationshipExporter{}
 	//
-	// err = csvr.ExportCalls(extractRes.Functions)
-	// if err != nil {
-	// 	slog.Error("", err)
-	// }
-	//
-	// err = csvr.ExportImplements(extractRes.TypeDecls)
-	// if err != nil {
-	// 	slog.Error("", err)
-	// }
-	//
+	err = csvr.ExportCalls(extractRes.Functions)
+	if err != nil {
+		slog.Error("", err)
+	}
+
+	err = csvr.ExportImplements(extractRes.TypeDecls)
+	if err != nil {
+		slog.Error("", err)
+	}
+
 	err = csvr.ExportImports(extractRes.Files)
 	if err != nil {
 		fmt.Println(err)
