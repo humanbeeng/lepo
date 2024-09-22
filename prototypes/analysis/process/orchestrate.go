@@ -6,12 +6,14 @@ import (
 	"github.com/humanbeeng/lepo/prototypes/analysis/extract"
 )
 
+// TODO: Refactor tf outta error handling and logging
 func Orchestrate(e extract.Extractor) {
 	slog.Info("Begin orchestration")
 	// Step 1: Extract
 	extractRes, err := e.Extract(
-		"github.com/humanbeeng/lepo/prototypes/go-testdata",
-		"/Users/apple/workspace/go/lepo/prototypes/go-testdata",
+		// "github.com/humanbeeng/lepo/prototypes/go-testdata",
+		"github.com/ardanlabs/service",
+		"/Users/humanbeeng/workspace/go/ardan-labs/service",
 
 		// "github.com/dgraph-io/dgraph",
 		// "/Users/apple/workspace/misc/dgraph",
@@ -63,4 +65,10 @@ func Orchestrate(e extract.Extractor) {
 	if err != nil {
 		slog.Error("", err)
 	}
+
+	err = csvr.ExportImplements(extractRes.TypeDecls)
+	if err != nil {
+		slog.Error("", err)
+	}
+
 }

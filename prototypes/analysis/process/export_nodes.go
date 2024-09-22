@@ -13,6 +13,7 @@ type (
 	CSVNodeExporter struct{}
 )
 
+// TODO: Refactor slog statements
 func (c *CSVNodeExporter) ExportTypes(types map[string]extract.TypeDecl) error {
 	slog.Info("Exporting structs to csv")
 
@@ -37,7 +38,6 @@ func (c *CSVNodeExporter) ExportTypes(types map[string]extract.TypeDecl) error {
 
 	err = csvwriter.Write(header)
 	if err != nil {
-		// TODO: Refactor slog error. Follow best practice
 		return fmt.Errorf("Unable to write header to type.csv %v", err)
 	}
 
@@ -53,7 +53,7 @@ func (c *CSVNodeExporter) ExportTypes(types map[string]extract.TypeDecl) error {
 		row := []string{t.Name, qname, tqn, und, string(t.Kind), code, t.Doc.Comment}
 		err := csvwriter.Write(row)
 		if err != nil {
-			slog.Error("Unable to write to type.csv file", err)
+			slog.Error("Unable to write to type.csv file", "err", err)
 			return err
 		}
 	}
@@ -61,7 +61,7 @@ func (c *CSVNodeExporter) ExportTypes(types map[string]extract.TypeDecl) error {
 	csvwriter.Flush()
 	err = csvwriter.Error()
 	if err != nil {
-		slog.Error("Unable to flush to type.csv file", err)
+		slog.Error("Unable to flush to type.csv file", "err", err)
 	}
 
 	slog.Info("Finished exporting types to type.csv file")
