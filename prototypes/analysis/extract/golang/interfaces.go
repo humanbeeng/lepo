@@ -41,8 +41,11 @@ func (v *InterfaceVisitor) Visit(node ast.Node) ast.Visitor {
 						}
 
 						td := extract.TypeDecl{
-							Name:       ts.Name.Name,
-							QName:      infQname,
+							Name:  ts.Name.Name,
+							QName: infQname,
+							Namespace: extract.Namespace{
+								Name: tsObj.Pkg().Path(),
+							},
 							TypeQName:  tsObj.Type().String(),
 							Underlying: tsObj.Type().Underlying().String(),
 							Kind:       extract.Interface,

@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
+	"strings"
 
 	"github.com/humanbeeng/lepo/prototypes/analysis/extract"
 )
@@ -44,7 +45,7 @@ func (v *FileVisitor) Visit(node ast.Node) ast.Visitor {
 						continue
 					}
 					i := extract.Import{
-						Path: is.Path.Value,
+						Path: strings.Trim(is.Path.Value, "\""),
 						Doc: extract.Doc{
 							Comment: is.Doc.Text() + is.Comment.Text(),
 							OfQName: is.Path.Value,

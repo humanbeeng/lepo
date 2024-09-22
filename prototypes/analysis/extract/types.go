@@ -1,5 +1,8 @@
 package extract
 
+// TODO: rename package into namespace
+
+// Languages
 const (
 	Go         string = "golang"
 	Rust       string = "rust"
@@ -72,6 +75,7 @@ type Variable struct {
 type Named struct {
 	Name       string
 	QName      string
+	Namespace  Namespace
 	TypeQName  string
 	Underlying string
 	Code       string
@@ -93,14 +97,15 @@ type TypeDecl struct {
 	Pos             int
 	End             int
 	Filepath        string
-	// Package    string
+	Namespace       Namespace
 }
 
 type File struct {
 	Filename string
-	Package  string
-	Imports  []Import
-	Language string
+	// package this file belongs to.
+	Namespace string
+	Imports   []Import
+	Language  string
 }
 
 type Namespace struct {
