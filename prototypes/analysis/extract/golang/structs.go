@@ -34,7 +34,8 @@ func (v *TypeVisitor) Visit(node ast.Node) ast.Visitor {
 					tspecObj := v.Info.Defs[tSpec.Name]
 
 					if st, ok := tSpec.Type.(*ast.StructType); ok {
-						stQName := tspecObj.Pkg().Path() + "." + tSpec.Name.Name
+						namespace := extract.Namespace{Name: tspecObj.Pkg().Path()}
+						stQName := namespace.Name + "." + tSpec.Name.Name
 						pos := v.Fset.Position(st.Pos()).Line
 						end := v.Fset.Position(st.End()).Line
 						filepath := v.Fset.Position(st.Pos()).Filename
@@ -54,6 +55,7 @@ func (v *TypeVisitor) Visit(node ast.Node) ast.Visitor {
 						td := extract.TypeDecl{
 							Name:            tSpec.Name.Name,
 							QName:           stQName,
+							Namespace:       namespace,
 							TypeQName:       tspecObj.Type().String(),
 							Underlying:      tspecObj.Type().Underlying().String(),
 							ImplementsQName: impl,
@@ -75,13 +77,14 @@ func (v *TypeVisitor) Visit(node ast.Node) ast.Visitor {
 							err := v.handleFieldNode(field, stQName)
 							// TODO: Revisit on how to handle errors
 							if err != nil {
-								slog.Error("Unable to visit field", err)
+								slog.Error("Unable to visit field", "err", err)
 							}
 						}
 					} else if id, ok := tSpec.Type.(*ast.Ident); ok {
 						// Handle type aliases
 
-						qname := tspecObj.Pkg().Path() + "." + tspecObj.Name()
+						namespace := extract.Namespace{Name: tspecObj.Pkg().Path()}
+						qname := namespace.Name + "." + tspecObj.Name()
 
 						pos := v.Fset.Position(id.Pos()).Line
 						end := v.Fset.Position(id.End()).Line
@@ -94,6 +97,7 @@ func (v *TypeVisitor) Visit(node ast.Node) ast.Visitor {
 						td := extract.TypeDecl{
 							Name:       tspecObj.Name(),
 							QName:      qname,
+							Namespace:  namespace,
 							TypeQName:  tspecObj.Type().String(),
 							Underlying: tspecObj.Type().Underlying().String(),
 							// TODO: Extract code
@@ -124,6 +128,7 @@ func (v *TypeVisitor) handleFieldNode(field *ast.Field, parentQName string) erro
 	for _, fieldName := range field.Names {
 		fieldObj := v.Info.Defs[fieldName]
 		fieldQName := parentQName + "." + fieldObj.Name()
+		namespace := extract.Namespace{Name: fieldObj.Pkg().Path()}
 
 		d := extract.Doc{
 			Comment: field.Doc.Text() + field.Comment.Text(),
@@ -148,6 +153,7 @@ func (v *TypeVisitor) handleFieldNode(field *ast.Field, parentQName string) erro
 			ftd := extract.TypeDecl{
 				Name:       fieldObj.Name(),
 				QName:      fieldQName,
+				Namespace:  namespace,
 				TypeQName:  fieldObj.Type().String(),
 				Underlying: fieldObj.Type().Underlying().String(),
 				Kind:       extract.Struct,
@@ -173,6 +179,7 @@ func (v *TypeVisitor) handleFieldNode(field *ast.Field, parentQName string) erro
 			Name:        fieldName.Name,
 			QName:       fieldQName,
 			TypeQName:   fieldObj.Type().String(),
+			Namespace:   namespace,
 			ParentQName: parentQName,
 			Pos:         v.Fset.Position(field.Pos()).Line,
 			End:         v.Fset.Position(field.End()).Line,

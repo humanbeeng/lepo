@@ -68,7 +68,7 @@ type Variable struct {
 	Pos       int
 	End       int
 	Filepath  string
-	Namespace string
+	Namespace Namespace
 }
 
 // TODO: Refactor this as TypeDecl
@@ -103,7 +103,7 @@ type TypeDecl struct {
 type File struct {
 	Filename string
 	// package this file belongs to.
-	Namespace string
+	Namespace Namespace
 	Imports   []Import
 	Language  string
 }

@@ -9,10 +9,9 @@ import (
 	"github.com/humanbeeng/lepo/prototypes/analysis/extract"
 )
 
-type (
-	CSVNodeExporter struct{}
-)
+type CSVNodeExporter struct{}
 
+// TODO: Refactor schema name constants
 // TODO: Refactor slog statements
 func (c *CSVNodeExporter) ExportTypes(types map[string]extract.TypeDecl) error {
 	slog.Info("Exporting structs to csv")
@@ -34,6 +33,7 @@ func (c *CSVNodeExporter) ExportTypes(types map[string]extract.TypeDecl) error {
 		"kind",
 		extract.Code,
 		"doc",
+		"namespace",
 	}
 
 	err = csvwriter.Write(header)
@@ -50,7 +50,11 @@ func (c *CSVNodeExporter) ExportTypes(types map[string]extract.TypeDecl) error {
 		und = escapeStr(und)
 		tqn = escapeStr(tqn)
 
-		row := []string{t.Name, qname, tqn, und, string(t.Kind), code, t.Doc.Comment}
+		if t.Namespace.Name == "" {
+			fmt.Println("Empty namespace found for", t.QName)
+		}
+
+		row := []string{t.Name, qname, tqn, und, string(t.Kind), code, t.Doc.Comment, t.Namespace.Name}
 		err := csvwriter.Write(row)
 		if err != nil {
 			slog.Error("Unable to write to type.csv file", "err", err)
@@ -88,6 +92,7 @@ func (c *CSVNodeExporter) ExportFunctions(functions map[string]extract.Function)
 		extract.Code,
 		"doc",
 		"file",
+		"namespace",
 	}
 
 	err = csvwriter.Write(header)
@@ -105,10 +110,10 @@ func (c *CSVNodeExporter) ExportFunctions(functions map[string]extract.Function)
 			continue
 		}
 
-		row := []string{f.Name, qname, f.ParentQName, "function", code, f.Doc.Comment, f.Filepath}
+		row := []string{f.Name, qname, f.ParentQName, "function", code, f.Doc.Comment, f.Filepath, f.Namespace.Name}
 		err := csvwriter.Write(row)
 		if err != nil {
-			slog.Error("Unable to write to function.csv file", err)
+			slog.Error("Unable to write to function.csv file", "err", err)
 			return err
 		}
 	}
@@ -116,7 +121,7 @@ func (c *CSVNodeExporter) ExportFunctions(functions map[string]extract.Function)
 	csvwriter.Flush()
 	err = csvwriter.Error()
 	if err != nil {
-		slog.Error("Unable to flush to function.csv file", err)
+		slog.Error("Unable to flush to function.csv file", "err", err)
 	}
 	slog.Info("Finished exporting functions to function.csv file")
 
@@ -143,6 +148,7 @@ func (c *CSVNodeExporter) ExportInterfaces(types map[string]extract.TypeDecl) er
 		"kind",
 		extract.Code,
 		"doc",
+		"namespace",
 	}
 
 	err = csvwriter.Write(header)
@@ -160,10 +166,10 @@ func (c *CSVNodeExporter) ExportInterfaces(types map[string]extract.TypeDecl) er
 		und = escapeStr(und)
 		tqn = escapeStr(tqn)
 
-		row := []string{t.Name, qname, tqn, und, string(t.Kind), code, t.Doc.Comment}
+		row := []string{t.Name, qname, tqn, und, string(t.Kind), code, t.Doc.Comment, t.Namespace.Name}
 		err := csvwriter.Write(row)
 		if err != nil {
-			slog.Error("Unable to write to interface.csv file", err)
+			slog.Error("Unable to write to interface.csv file", "err", err)
 			return err
 		}
 	}
@@ -171,7 +177,7 @@ func (c *CSVNodeExporter) ExportInterfaces(types map[string]extract.TypeDecl) er
 	csvwriter.Flush()
 	err = csvwriter.Error()
 	if err != nil {
-		slog.Error("Unable to flush to interface.csv file", err)
+		slog.Error("Unable to flush to interface.csv file", "err", err)
 	}
 	slog.Info("Finished exporting types to interface.csv file")
 
@@ -198,6 +204,7 @@ func (c *CSVNodeExporter) ExportNamed(named map[string]extract.Named) error {
 		"kind",
 		extract.Code,
 		"doc",
+		"namespace",
 	}
 
 	err = csvwriter.Write(header)
@@ -216,10 +223,10 @@ func (c *CSVNodeExporter) ExportNamed(named map[string]extract.Named) error {
 		tqn = escapeStr(tqn)
 
 		// TODO : Refer schema for named types and revisit this name: named
-		row := []string{n.Name, qname, tqn, und, "named", code, n.Doc.Comment}
+		row := []string{n.Name, qname, tqn, und, "named", code, n.Doc.Comment, n.Namespace.Name}
 		err := csvwriter.Write(row)
 		if err != nil {
-			slog.Error("Unable to write to named.csv file", err)
+			slog.Error("Unable to write to named.csv file", "err", err)
 			return err
 		}
 	}
@@ -227,7 +234,7 @@ func (c *CSVNodeExporter) ExportNamed(named map[string]extract.Named) error {
 	csvwriter.Flush()
 	err = csvwriter.Error()
 	if err != nil {
-		slog.Error("Unable to flush to named.csv file", err)
+		slog.Error("Unable to flush to named.csv file", "err", err)
 	}
 	slog.Info("Finished exporting types to named.csv file")
 
@@ -255,9 +262,9 @@ func (c *CSVNodeExporter) ExportFile(files map[string]extract.File) error {
 
 	fileHeader := []string{
 		extract.Filename,
-		"namespace",
 		extract.Language,
 		"kind",
+		"namespace",
 	}
 
 	importHeader := []string{
@@ -280,10 +287,10 @@ func (c *CSVNodeExporter) ExportFile(files map[string]extract.File) error {
 
 	for _, file := range files {
 		// TODO : Refer schema for named types and revisit this name: named
-		row := []string{file.Filename, file.Namespace, file.Language, "file"}
+		row := []string{file.Filename, file.Language, "file", file.Namespace.Name}
 		err := fileWriter.Write(row)
 		if err != nil {
-			slog.Error("Unable to write row to file.csv file", err)
+			slog.Error("Unable to write row to file.csv file", "err", err)
 			return err
 		}
 
@@ -291,7 +298,7 @@ func (c *CSVNodeExporter) ExportFile(files map[string]extract.File) error {
 			importRow := []string{i.Name, i.Path, i.Doc.Comment, "import"}
 			err := importWriter.Write(importRow)
 			if err != nil {
-				slog.Error("Unable to write row to import.csv", err)
+				slog.Error("Unable to write row to import.csv", "err", err)
 				return err
 			}
 		}
@@ -300,13 +307,13 @@ func (c *CSVNodeExporter) ExportFile(files map[string]extract.File) error {
 	fileWriter.Flush()
 	err = fileWriter.Error()
 	if err != nil {
-		slog.Error("Unable to flush to file.csv file", err)
+		slog.Error("Unable to flush to file.csv file", "err", err)
 	}
 
 	importWriter.Flush()
 	err = importWriter.Error()
 	if err != nil {
-		slog.Error("Unable to flush to import.csv file", err)
+		slog.Error("Unable to flush to import.csv file", "err", err)
 	}
 
 	slog.Info("Finished exporting files to file.csv and import.csv")
@@ -340,7 +347,7 @@ func (c *CSVNodeExporter) ExportNamespace(namespaces []extract.Namespace) error 
 		row := []string{t.Name, "namespace"}
 		err := csvwriter.Write(row)
 		if err != nil {
-			slog.Error("Unable to write to namespace.csv file", err)
+			slog.Error("Unable to write to namespace.csv file", "err", err)
 			return err
 		}
 	}
@@ -348,7 +355,7 @@ func (c *CSVNodeExporter) ExportNamespace(namespaces []extract.Namespace) error 
 	csvwriter.Flush()
 	err = csvwriter.Error()
 	if err != nil {
-		slog.Error("Unable to flush to namespace.csv file", err)
+		slog.Error("Unable to flush to namespace.csv file", "err", err)
 	}
 
 	slog.Info("Finished exporting types to namespace.csv file")
@@ -375,6 +382,7 @@ func (c *CSVNodeExporter) ExportMembers(members map[string]extract.Member) error
 		"kind",
 		extract.Code,
 		"doc",
+		"namespace",
 	}
 
 	err = csvwriter.Write(header)
@@ -399,10 +407,11 @@ func (c *CSVNodeExporter) ExportMembers(members map[string]extract.Member) error
 			"member",
 			code,
 			t.Doc.Comment,
+			t.Namespace.Name,
 		}
 		err := csvwriter.Write(row)
 		if err != nil {
-			slog.Error("Unable to write to members.csv file", err)
+			slog.Error("Unable to write to members.csv file", "err", err)
 			return err
 		}
 	}
@@ -410,7 +419,8 @@ func (c *CSVNodeExporter) ExportMembers(members map[string]extract.Member) error
 	csvwriter.Flush()
 	err = csvwriter.Error()
 	if err != nil {
-		slog.Error("Unable to flush to members.csv file", err)
+		slog.Error("Unable to flush to members.csv file", "err", err)
+		return err
 	}
 
 	slog.Info("Finished exporting types to members.csv file")

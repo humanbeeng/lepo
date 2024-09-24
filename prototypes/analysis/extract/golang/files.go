@@ -26,10 +26,11 @@ func (v *FileVisitor) Visit(node ast.Node) ast.Visitor {
 		{
 			// TODO: Remove absolute paths
 			filename := v.Fset.Position(nd.Pos()).Filename
+			namespace := extract.Namespace{Name: v.Package}
 
 			f := extract.File{
 				Filename:  filename,
-				Namespace: v.Package,
+				Namespace: namespace,
 				Language:  extract.Go,
 				Imports:   make([]extract.Import, 0),
 			}
@@ -58,7 +59,7 @@ func (v *FileVisitor) Visit(node ast.Node) ast.Visitor {
 					}
 					f.Imports = append(f.Imports, i)
 				}
-				v.Files[f.Namespace+"."+f.Filename] = f
+				v.Files[f.Namespace.Name+"."+f.Filename] = f
 			}
 			return v
 		}

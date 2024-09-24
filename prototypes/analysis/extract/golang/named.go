@@ -34,17 +34,16 @@ func (v *NamedVisitor) Visit(node ast.Node) ast.Visitor {
 						end := v.Fset.Position(ts.End()).Line
 						ftObj, objOk := v.Info.Defs[ts.Name]
 						if objOk {
-							ftQName := ftObj.Pkg().Path() + "." + ftObj.Name()
+							namespace := extract.Namespace{Name: ftObj.Pkg().Path()}
+							ftQName := namespace.Name + "." + ftObj.Name()
 							codeStr, err := extractCode(ts, v.Fset)
 							if err != nil {
 								slog.Error("Unable to extract code", "qname", ftQName)
 							}
 							funcType := extract.Named{
-								Name:  ftObj.Name(),
-								QName: ftQName,
-								Namespace: extract.Namespace{
-									Name: ftObj.Pkg().Path(),
-								},
+								Name:       ftObj.Name(),
+								QName:      ftQName,
+								Namespace:  namespace,
 								TypeQName:  ftObj.Type().String(),
 								Underlying: ftObj.Type().Underlying().String(),
 								Pos:        pos,
@@ -75,8 +74,9 @@ func (v *NamedVisitor) Visit(node ast.Node) ast.Visitor {
 					end := v.Fset.Position(vs.End()).Line
 					filepath := v.Fset.Position(vs.Pos()).Filename
 
-					qname := vsObj.Pkg().Path() + "." + name.Name
 					code, _ := extractCode(node, v.Fset)
+					namespace := extract.Namespace{Name: vsObj.Pkg().Path()}
+					qname := namespace.Name + "." + name.Name
 
 					named := extract.Named{
 						Name:       name.Name,
@@ -88,6 +88,7 @@ func (v *NamedVisitor) Visit(node ast.Node) ast.Visitor {
 						Pos:        pos,
 						End:        end,
 						Filepath:   filepath,
+						Namespace:  namespace,
 					}
 					v.Named[qname] = named
 				}
