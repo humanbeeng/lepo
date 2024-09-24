@@ -136,3 +136,45 @@ func (c *CSVRelationshipExporter) ExportImports(files map[string]extract.File) e
 	slog.Info("Finished exporting to imports.csv")
 	return nil
 }
+
+func (c *CSVRelationshipExporter) ExportReturns(functions map[string]extract.Function) error {
+	slog.Info("Exporting returns to csv")
+
+	csvFile, err := os.Create("neo4j/import/returns.csv")
+	if err != nil {
+		return fmt.Errorf("Unable to create returns.csv")
+	}
+
+	defer csvFile.Close()
+
+	csvwriter := csv.NewWriter(csvFile)
+
+	header := []string{
+		"from",
+		"to",
+	}
+
+	err = csvwriter.Write(header)
+	if err != nil {
+		return fmt.Errorf("unable to write header to returns.csv")
+	}
+
+	for qname, f := range functions {
+		for _, ret := range f.ReturnQNames {
+			row := []string{qname, ret}
+			err := csvwriter.Write(row)
+			if err != nil {
+				return fmt.Errorf("unable to write call row to returns.csv: %w", err)
+			}
+		}
+	}
+
+	csvwriter.Flush()
+	err = csvwriter.Error()
+	if err != nil {
+		return fmt.Errorf("unable to flush to returns.csv: %w", err)
+	}
+	slog.Info("Finished exporting to returns.csv")
+
+	return nil
+}
