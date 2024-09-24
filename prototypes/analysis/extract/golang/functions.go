@@ -33,7 +33,8 @@ func (v *FunctionVisitor) Visit(node ast.Node) ast.Visitor {
 			pos := v.Fset.Position(n.Pos()).Line
 			end := v.Fset.Position(n.End()).Line
 			filepath := v.Fset.Position(n.Pos()).Filename
-			qname := fnObj.Pkg().Path() + "." + fnObj.Name()
+			namespace := extract.Namespace{Name: fnObj.Pkg().Path()}
+			qname := namespace.Name + "." + fnObj.Name()
 
 			mCode, err := extractCode(n, v.Fset)
 			if err != nil {
@@ -50,6 +51,7 @@ func (v *FunctionVisitor) Visit(node ast.Node) ast.Visitor {
 						f := extract.Function{
 							Name:        fnObj.Name(),
 							QName:       qname,
+							Namespace:   namespace,
 							ParentQName: stQName,
 							Pos:         pos,
 							End:         end,
@@ -70,6 +72,7 @@ func (v *FunctionVisitor) Visit(node ast.Node) ast.Visitor {
 							f := extract.Function{
 								Name:        fnObj.Name(),
 								QName:       qname,
+								Namespace:   namespace,
 								ParentQName: stQName,
 								Pos:         pos,
 								End:         end,
@@ -91,6 +94,7 @@ func (v *FunctionVisitor) Visit(node ast.Node) ast.Visitor {
 					Name:        fnObj.Name(),
 					QName:       qname,
 					ParentQName: "",
+					Namespace:   namespace,
 					Pos:         pos,
 					End:         end,
 					Filepath:    filepath,

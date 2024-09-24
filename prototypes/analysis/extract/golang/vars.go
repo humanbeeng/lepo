@@ -34,7 +34,8 @@ func (v *VarVisitor) Visit(node ast.Node) ast.Visitor {
 					}
 
 					name := vsObj.Name()
-					qname := vsObj.Pkg().Path() + "." + name
+					namespace := extract.Namespace{Name: vsObj.Pkg().Path()}
+					qname := namespace.Name + "." + name
 					pos := v.Fset.Position(vs.Pos()).Line
 					end := v.Fset.Position(vs.End()).Line
 					filepath := v.Fset.Position(vs.Pos()).Filename
@@ -44,6 +45,7 @@ func (v *VarVisitor) Visit(node ast.Node) ast.Visitor {
 						QName:      qname,
 						TypeQName:  vsObj.Type().String(),
 						Underlying: vsObj.Type().Underlying().String(),
+						Namespace:  namespace,
 						Pos:        pos,
 						End:        end,
 						Filepath:   filepath,
@@ -53,7 +55,6 @@ func (v *VarVisitor) Visit(node ast.Node) ast.Visitor {
 							// TODO: Revisit
 							Type: extract.SingleLine,
 						},
-						Namespace: vsObj.Pkg().Path(),
 					}
 
 					v.Vars[qname] = variable
