@@ -178,3 +178,45 @@ func (c *CSVRelationshipExporter) ExportReturns(functions map[string]extract.Fun
 
 	return nil
 }
+
+func (c *CSVRelationshipExporter) ExportParams(functions map[string]extract.Function) error {
+	slog.Info("Exporting params to csv")
+
+	csvFile, err := os.Create("neo4j/import/params.csv")
+	if err != nil {
+		return fmt.Errorf("Unable to create params.csv")
+	}
+
+	defer csvFile.Close()
+
+	csvwriter := csv.NewWriter(csvFile)
+
+	header := []string{
+		"from",
+		"to",
+	}
+
+	err = csvwriter.Write(header)
+	if err != nil {
+		return fmt.Errorf("unable to write header to params.csv")
+	}
+
+	for qname, f := range functions {
+		for _, param := range f.ParamQNames {
+			row := []string{param, qname}
+			err := csvwriter.Write(row)
+			if err != nil {
+				return fmt.Errorf("unable to write call row to param.csv: %w", err)
+			}
+		}
+	}
+
+	csvwriter.Flush()
+	err = csvwriter.Error()
+	if err != nil {
+		return fmt.Errorf("unable to flush to param.csv: %w", err)
+	}
+	slog.Info("Finished exporting to param.csv")
+
+	return nil
+}

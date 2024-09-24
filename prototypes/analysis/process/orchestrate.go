@@ -79,4 +79,9 @@ func Orchestrate(e extract.Extractor) {
 		fmt.Println(err)
 	}
 
+	err = csvr.ExportParams(extractRes.Functions)
+	if err != nil {
+		fmt.Println(err)
+	}
+
 }
